@@ -20,8 +20,8 @@ export const THEMES = {
   tiki: {
     music: 'tiki', carpet: { style: 'tropical', pal: { base: '#0d3a3a', a: '#e85a2a', b: '#2a8a4a', c: '#f2b03a', d: '#5ad16a' } },
     floor: 'carpet', altFloor: 'planks', wall: () => M.bamboo(1, 1), wallScale: [2.5, 2.5], wainscot: () => M.wood('walnut', 1, 1, false), trim: () => M.matte(0x4a2e14, 0.8),
-    ceiling: () => M.bamboo(1, 1), ceilScale: [3, 3], beams: () => M.wood('rustic', 1, 4, false), column: 'tiki', chandelier: 'tiki', sconce: 'iron',
-    lightColor: 0xffa860, hemi: [0xffd0a0, 0x06201a, 0.4], fog: 0x061614, fogDensity: 0.016, exposure: 1.05, stool: 'bamboo', stoolSeat: 0xd2691e, potStyle: 'terracotta', bg: 0x020806,
+    ceiling: () => M.wood('rustic', 1, 1, false), ceilScale: [3, 3], beams: () => M.wood('rustic', 1, 4, false), column: 'tiki', chandelier: 'tiki', sconce: 'iron',
+    lightColor: 0xffa860, hemi: [0xffd0a0, 0x06201a, 0.3], fog: 0x061614, fogDensity: 0.016, exposure: 0.86, stool: 'bamboo', stoolSeat: 0xd2691e, potStyle: 'terracotta', bg: 0x020806,
   },
   palace: {
     music: 'palace', carpet: { style: 'royal', pal: { base: '#4a0a14', a: '#d8a23a', b: '#1d5a5e', c: '#6a0f1f', d: '#f1d27a' } },
@@ -38,8 +38,8 @@ export const THEMES = {
   monaco: {
     music: 'lounge', carpet: { style: 'deco', pal: { base: '#0b2a22', a: '#d8b24a', b: '#14453a', c: '#0f3a2e', d: '#f6e3a0' } },
     floor: 'carpet', altFloor: 'tiles', wall: () => M.damask('#0d2a24', '#c9a24a', 1, 1), wallScale: [1.6, 1.6], wainscot: () => M.wood('walnut', 1, 1), trim: () => M.gold(),
-    ceiling: () => M.coffer('#f0e6d0', '#c9a24a', 1, 1), ceilScale: [2.5, 2.5], column: 'marble', chandelier: 'crystal', sconce: 'gold', cove: 0xffd090,
-    lightColor: 0xffd8a8, hemi: [0xfff0d8, 0x0a1a14, 0.28], fog: 0x08120f, fogDensity: 0.01, exposure: 0.88, stool: 'gold', stoolSeat: 0x0f3a2e, potStyle: 'black', bg: 0x030605,
+    ceiling: () => M.coffer('#b8a888', '#a8843a', 1, 1), ceilScale: [2.5, 2.5], column: 'marble', chandelier: 'crystal', sconce: 'gold', cove: 0xffc070,
+    lightColor: 0xffd8a8, hemi: [0xfff0d8, 0x0a1a14, 0.24], fog: 0x08120f, fogDensity: 0.011, exposure: 0.8, stool: 'gold', stoolSeat: 0x0f3a2e, potStyle: 'black', bg: 0x030605,
   },
 };
 

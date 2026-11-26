@@ -328,6 +328,7 @@ export class Director {
     this.player.sit(pose.pos, pose.look, 0.75);
     this.ui.hidePrompt();
     this.ui.crosshairVisible(false);
+    this.input.showTouch(false);
     audio.play('whoosh', { vol: 0.5 });
     st.enter();
   }
@@ -339,6 +340,7 @@ export class Director {
     this.ui.closePanel();
     this.station = null;
     this.ui.crosshairVisible(true);
+    this.input.showTouch(true);
     if (!silent) { this.player.stand(0.6); if (!this.input.isTouch) this.input.requestLock(); }
     if (state.money < 1 && !silent) setTimeout(() => this.checkBroke(), 800);
   }

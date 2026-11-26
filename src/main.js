@@ -26,7 +26,8 @@ const TIPS = [
   'Tip: Blackjack pays 3 to 2. Dealer stands on all 17s.',
 ];
 
-const FAST = /[?&]fast/.test(location.search);
+const DEV = import.meta.env.DEV;
+const FAST = DEV && /[?&]fast/.test(location.search);
 
 class App {
   constructor() {
@@ -96,7 +97,7 @@ class App {
     this.muted = SDK.muteAudioSetting;
 
     // resume a run in progress or start fresh (no menus: straight into the casino)
-    const dayParam = +(new URLSearchParams(location.search).get('day') || 0);
+    const dayParam = DEV ? +(new URLSearchParams(location.search).get('day') || 0) : 0;
     if (dayParam > 0) { state.newRun(); state.day = dayParam; state.startDay(true); state.money = state.quota * 0.6; }
     else if (!state.loadRun()) { state.newRun(); state.save(); }
     await d.loadDay((p, msg) => this.setLoading(0.05 + p * 0.95, msg));
@@ -109,7 +110,7 @@ class App {
     this.bindEvents();
     this.input.setupTouch(document.getElementById('ui'), () => d.touchUse());
     this.loop();
-    window.__gamble = this; // handy for automated smoke tests
+    if (DEV) window.__gamble = this; // handy for automated smoke tests
   }
 
   bindEvents() {
