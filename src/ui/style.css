@@ -168,6 +168,10 @@ button { font-family: var(--ui); }
 .betcell.win { background: rgba(77,255,154,.25); border-color: var(--green); }
 .betcell.hot { box-shadow: 0 0 0 2px var(--gold) inset; }
 .mini { font-size: 12px; color: var(--muted); }
+.betgrid.compact { gap: 4px; }
+.betgrid.compact .betcell { padding: 3px 5px; min-width: 0; }
+.betgrid.compact .betcell .nm { font-size: 11px; }
+.betgrid.compact .betcell .od { font-size: 9.5px; }
 .history { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
 .history i { font-style: normal; min-width: 26px; padding: 2px 5px; border-radius: 6px; text-align: center; font-weight: 900; font-size: 12px; }
 .history i.r { background: #c81a34; } .history i.b { background: #1a1a1a; border: 1px solid #555; } .history i.g { background: #0e7a32; }

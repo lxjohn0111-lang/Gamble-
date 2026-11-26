@@ -117,7 +117,7 @@ export const M = {
   plaster: (hex = 0xd8cbb6) => get('plaster' + hex, () => std({ color: hex, roughness: 0.92, roughnessMap: T.roughnessNoise(3, 0.75, 1) })),
   shadowBlob: () => get('shadowBlob', () => new THREE.MeshBasicMaterial({ map: T.radialTexture('rgba(0,0,0,0.55)', 'rgba(0,0,0,0)', 128, 0.35), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 })),
   lightPool: (hex = 0xffd29a, opacity = 0.35) => get('pool' + hex + opacity, () => new THREE.MeshBasicMaterial({ map: T.radialTexture('rgba(255,255,255,1)', 'rgba(255,255,255,0)', 128, 0.2), color: hex, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, toneMapped: true })),
-  shaft: (hex = 0xffe2b0, opacity = 0.08) => get('shaft' + hex + opacity, () => new THREE.MeshBasicMaterial({ map: T.shaftTexture(), color: hex, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false })),
+  shaft: (hex = 0xffe2b0, opacity = 0.08) => get('shaft' + hex + opacity, () => new THREE.MeshBasicMaterial({ map: T.shaftTexture(), color: hex, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.FrontSide, fog: false })),
   glow: (hex = 0xffc070, opacity = 0.8) => get('glow' + hex + opacity, () => new THREE.SpriteMaterial({ map: T.radialTexture('rgba(255,255,255,1)', 'rgba(255,255,255,0)', 64, 0.15), color: hex, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false })),
 };
 

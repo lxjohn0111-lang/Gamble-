@@ -293,7 +293,7 @@ export class World {
         const pool = new THREE.Mesh(G.plane(7, 7), M.lightPool(th.lightColor, 0.22));
         pool.rotation.x = -Math.PI / 2; pool.position.set(x, 0.015, z); this.dynamicRoot.add(pool);
         if (this.quality !== 'low' && r.h > 4) {
-          const shaft = new THREE.Mesh(G.cyl(0.9, 2.6, r.h - hang - 0.3, 20, true), M.shaft(th.lightColor, 0.05));
+          const shaft = new THREE.Mesh(G.cyl(0.9, 2.6, r.h - hang - 0.3, 20, true), M.shaft(th.lightColor, this.def.theme === 'neon' ? 0.02 : 0.04));
           shaft.position.set(x, (r.h - hang - 0.3) / 2, z); shaft.renderOrder = 5;
           this.dynamicRoot.add(shaft);
         }
