@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Station, Screen } from './common.js';
+import { Station, Screen, BulbArray } from './common.js';
 import { G, mesh, roundedRectShape } from '../engine/geo.js';
 import { M } from '../engine/materials.js';
 import { makeCanvas, toTex, cached } from '../engine/textures.js';
@@ -376,12 +376,12 @@ export class SlotMachine extends Station {
     this.lineMesh.renderOrder = 3;
     this.videoLines = this.video ? this.makeVideoLines(rw, gap) : null;
     // glass
-    const glass = mesh(G.plane(winW, winH), slotGlass(), 0, winY, 0.235, { parent: g });
+    const glass = mesh(G.plane(winW, winH), slotGlass(), 0, winY, 0.235, { parent: S });
     glass.renderOrder = 4;
     // LED display
     this.screen = new Screen(512, 96, 1.6);
     mesh(G.plane(winW, 0.09), this.screen.mat, 0, winY + winH / 2 + 0.09, 0.258, { parent: g });
-    mesh(G.box(winW + 0.04, 0.11, 0.02), M.blackMetal(), 0, winY + winH / 2 + 0.09, 0.246, { parent: g });
+    mesh(G.box(winW + 0.04, 0.11, 0.02), M.blackMetal(), 0, winY + winH / 2 + 0.09, 0.246, { parent: S });
     // buttons
     this.btnMats = [];
     this.buttons = [];
@@ -390,11 +390,11 @@ export class SlotMachine extends Station {
       const big = name === 'SPIN';
       const m = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.6, roughness: 0.3 });
       const b = new THREE.Group();
-      mesh(G.cyl(big ? 0.035 : 0.026, big ? 0.035 : 0.026, 0.012, 20), chrome, 0, 0, 0, { parent: b });
+      const base = new THREE.Group();
+      mesh(G.cyl(big ? 0.035 : 0.026, big ? 0.035 : 0.026, 0.012, 20), chrome, 0, 0, 0, { parent: base });
       const cap = mesh(G.cyl(big ? 0.03 : 0.021, big ? 0.03 : 0.021, 0.016, 20), m, 0, 0.008, 0, { parent: b });
-      b.position.set(-0.24 + i * (0.48 / (btnDefs.length - 1)), 1.1, 0.33);
-      b.rotation.x = -0.25;
-      g.add(b);
+      for (const o of [b, base]) { o.position.set(-0.24 + i * (0.48 / (btnDefs.length - 1)), 1.1, 0.33); o.rotation.x = -0.25; }
+      g.add(b); S.add(base);
       this.btnMats.push(m); this.buttons.push({ name, g: b, cap, m, base: 0.6 });
     });
     // classic lever
@@ -410,16 +410,17 @@ export class SlotMachine extends Station {
     // candle light on top
     this.candleMat = new THREE.MeshStandardMaterial({ color: 0x222222, emissive: new THREE.Color(this.accent), emissiveIntensity: 0.6, roughness: 0.3, transparent: true, opacity: 0.9 });
     mesh(G.cyl(0.045, 0.045, 0.16, 16), this.candleMat, 0, 2.3, -0.05, { parent: g });
-    mesh(G.cyl(0.05, 0.05, 0.02, 16), chrome, 0, 2.21, -0.05, { parent: g });
-    mesh(G.sphere(0.03, 10, 8), chrome, 0, 2.39, -0.05, { parent: g });
-    // side chaser lights
-    this.chaser = [];
-    for (const s of [-1, 1]) for (let i = 0; i < 8; i++) {
-      const b = mesh(G.sphere(0.012, 8, 6), M.bulb(0x553311, 0.3), s * 0.385, 0.8 + i * 0.13, 0.22, { parent: g });
-      this.chaser.push(b);
-    }
-    this.bulbOn = M.bulb(0xffe08a, 2.2); this.bulbOff = M.bulb(0x553311, 0.25);
+    mesh(G.cyl(0.05, 0.05, 0.02, 16), chrome, 0, 2.21, -0.05, { parent: S });
+    mesh(G.sphere(0.03, 10, 8), chrome, 0, 2.39, -0.05, { parent: S });
+    // side chaser lights (one instanced draw call)
+    const bp = [];
+    for (const s of [-1, 1]) for (let i = 0; i < 8; i++) bp.push(new THREE.Vector3(s * 0.385, 0.8 + i * 0.13, 0.22));
+    this.chaser = new BulbArray(bp, 0.012, 0xffe08a, 0x3a2410, 2.2);
+    g.add(this.chaser.mesh);
     this.coinsInTray = [];
+    this.trayCoins = new THREE.InstancedMesh(G.cyl(0.013, 0.013, 0.003, 14), M.gold(), 30);
+    this.trayCoins.count = 0; this.trayCoins.frustumCulled = false;
+    g.add(this.trayCoins);
     // seat for NPC patrons
     this.registerSeat(new THREE.Vector3(0, 0, 0.62), 0, { seat: 0.78, standOff: 0.55 });
     this.drawScreen();
@@ -747,12 +748,9 @@ export class SlotMachine extends Station {
     const pos = this.worldPos();
     for (let i = 0; i < n; i++) {
       setTimeout(() => {
-        if (this.coinsInTray.length > 40) { const old = this.coinsInTray.shift(); this.group.remove(old); }
-        const c = new THREE.Mesh(G.cyl(0.013, 0.013, 0.003, 14), M.gold());
-        c.position.set((rand() - 0.5) * 0.36, 0.78, 0.31);
-        c.rotation.set(rand() * 3, rand() * 3, rand() * 3);
-        c.userData.vy = 0; c.userData.rest = 0.668 + this.coinsInTray.length * 0.0007;
-        this.group.add(c); this.coinsInTray.push(c);
+        if (this.coinsInTray.length >= 30) this.coinsInTray.shift();
+        const c = { position: new THREE.Vector3((rand() - 0.5) * 0.36, 0.78, 0.31), rotation: new THREE.Euler(rand() * 3, rand() * 3, rand() * 3), userData: { vy: 0, rest: 0.668 + this.coinsInTray.length * 0.0007 } };
+        this.coinsInTray.push(c);
         audio.play('coin', { pos, vol: 0.6 });
       }, i * 70);
     }
@@ -784,24 +782,33 @@ export class SlotMachine extends Station {
     this.flashT = Math.max(0, (this.flashT || 0) - dt);
     const chase = this.phase === 'spin' || this.flashT > 0 || this.anticFlash;
     const step = Math.floor(t * (this.flashT > 0 ? 14 : 9));
-    const n = this.chaser.length / 2;
-    for (let i = 0; i < this.chaser.length; i++) {
+    const n = this.chaser.n / 2;
+    for (let i = 0; i < this.chaser.n; i++) {
       const k = i % n;
       const on = chase ? (this.flashT > 0 ? step % 2 === 0 : (k + step) % 4 === 0) : (k + Math.floor(t * 2)) % 8 === 0;
-      this.chaser[i].material = on ? this.bulbOn : this.bulbOff;
+      this.chaser.set(i, on);
     }
+    this.chaser.commit();
     this.candleMat.emissiveIntensity = this.flashT > 0 ? (step % 2 ? 4 : 0.4) : this.anticFlash ? 2 + Math.sin(t * 20) * 1.5 : 0.6 + Math.sin(t * 1.5) * 0.2;
     // win lines
     if (this.lineMat.opacity > 0 && !this.video) this.lineMat.opacity = this.phase === 'spin' ? 0 : 0.6 + 0.4 * Math.sin(t * 10);
+    this.lineMesh.visible = this.lineMat.opacity > 0.01;
     if (this.video && this.winLines && this.winLines.length && this.phase !== 'spin') {
       this.winLineT += dt;
       if (this.winLineT > 0.9) { this.winLineT = 0; this.winLineIdx = (this.winLineIdx + 1) % this.winLines.length; }
       this.videoLines.forEach((l, i) => (l.visible = i === this.winLines[this.winLineIdx] || (this.winLineT < 0.3 && this.winLines.includes(i) && false)));
     }
     // tray coins settle
-    for (const c of this.coinsInTray) {
-      const u = c.userData;
-      if (c.position.y > u.rest) { u.vy -= 9.8 * dt; c.position.y = Math.max(u.rest, c.position.y + u.vy * dt); if (c.position.y === u.rest) { c.rotation.x = Math.PI / 2 * 0 + (rand() - 0.5) * 0.2; c.rotation.z = (rand() - 0.5) * 0.2; } }
+    if (this.coinsInTray.length) {
+      const m4 = this._m4 || (this._m4 = new THREE.Matrix4()), q = this._q || (this._q = new THREE.Quaternion()), one = this._one || (this._one = new THREE.Vector3(1, 1, 1));
+      let moving = false;
+      this.coinsInTray.forEach((c, i) => {
+        const u = c.userData;
+        if (c.position.y > u.rest) { moving = true; u.vy -= 9.8 * dt; c.position.y = Math.max(u.rest, c.position.y + u.vy * dt); if (c.position.y === u.rest) { c.rotation.x = (rand() - 0.5) * 0.2; c.rotation.z = (rand() - 0.5) * 0.2; } }
+        m4.compose(c.position, q.setFromEuler(c.rotation), one); this.trayCoins.setMatrixAt(i, m4);
+      });
+      this.trayCoins.count = this.coinsInTray.length;
+      if (moving || this._lastCoinCount !== this.coinsInTray.length) { this.trayCoins.instanceMatrix.needsUpdate = true; this._lastCoinCount = this.coinsInTray.length; }
     }
     if (active && this.phase === 'idle' && this._lastMoney !== this.state.money) { this._lastMoney = this.state.money; this.drawScreen(); }
   }

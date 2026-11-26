@@ -227,17 +227,17 @@ export function shoeGeometry(type = 'sneaker', main = '#e33', side = 1) {
     const P = [];
     if (type === 'sneaker') {
       P.push(prep(new RoundedBoxGeometry(0.11, 0.035, 0.25, 3, 0.015), '#f3f1ea', M4(0, -0.068, 0.04)));
-      P.push(prep(new THREE.SphereGeometry(0.06, 18, 12), main, M4(0, -0.04, 0.035, 0, 0, 0, 0.88, 0.7, 2.0)));
+      P.push(prep(new THREE.SphereGeometry(0.06, 14, 9), main, M4(0, -0.04, 0.035, 0, 0, 0, 0.88, 0.7, 2.0)));
       P.push(prep(new THREE.SphereGeometry(0.045, 14, 10), '#f3f1ea', M4(0, -0.045, 0.125, 0, 0, 0, 1.15, 0.65, 0.75)));
       for (let i = 0; i < 3; i++) P.push(prep(new THREE.BoxGeometry(0.06, 0.006, 0.01), '#ffffff', M4(0, -0.0 - i * 0.008, 0.03 + i * 0.03, -0.5)));
       P.push(prep(new THREE.BoxGeometry(0.004, 0.02, 0.09), '#ffffff', M4(side * 0.052, -0.05, 0.02)));
     } else if (type === 'loafer') {
       P.push(prep(new RoundedBoxGeometry(0.1, 0.02, 0.24, 3, 0.008), '#2a1a12', M4(0, -0.075, 0.04)));
-      P.push(prep(new THREE.SphereGeometry(0.056, 18, 12), main, M4(0, -0.05, 0.04, 0, 0, 0, 0.9, 0.55, 2.05)));
+      P.push(prep(new THREE.SphereGeometry(0.056, 14, 9), main, M4(0, -0.05, 0.04, 0, 0, 0, 0.9, 0.55, 2.05)));
       P.push(prep(new THREE.BoxGeometry(0.06, 0.008, 0.02), '#c9a24a', M4(0, -0.02, 0.07, -0.3)));
     } else if (type === 'boot') {
       P.push(prep(new RoundedBoxGeometry(0.1, 0.03, 0.25, 3, 0.012), '#2a1a10', M4(0, -0.07, 0.04)));
-      P.push(prep(new THREE.SphereGeometry(0.058, 18, 12), main, M4(0, -0.045, 0.06, 0, 0, 0, 0.88, 0.65, 1.9)));
+      P.push(prep(new THREE.SphereGeometry(0.058, 14, 9), main, M4(0, -0.045, 0.06, 0, 0, 0, 0.88, 0.65, 1.9)));
       P.push(prep(new THREE.CylinderGeometry(0.06, 0.055, 0.2, 16), main, M4(0, 0.04, -0.01)));
       P.push(prep(new THREE.TorusGeometry(0.06, 0.006, 6, 20), '#c9a24a', M4(0, 0.13, -0.01, Math.PI / 2)));
       P.push(prep(new THREE.BoxGeometry(0.03, 0.035, 0.03), '#2a1a10', M4(0, -0.085, -0.06)));
@@ -276,8 +276,8 @@ export function handGeometry(pose = 'relaxed', side = 1) {
     const H = HAND_POSES[pose] || HAND_POSES.relaxed;
     const P = [];
     // palm: puffy mitten
-    P.push(prep(new THREE.SphereGeometry(0.05, 18, 12), '#fff', M4(0, 0, 0.045, 0, 0, 0, 0.95, 0.55, 1.05)));
-    P.push(prep(new THREE.SphereGeometry(0.036, 14, 10), '#fff', M4(0, 0, 0.005, 0, 0, 0, 1.05, 0.9, 0.8)));
+    P.push(prep(new THREE.SphereGeometry(0.05, 12, 8), '#fff', M4(0, 0, 0.045, 0, 0, 0, 0.95, 0.55, 1.05)));
+    P.push(prep(new THREE.SphereGeometry(0.036, 10, 6), '#fff', M4(0, 0, 0.005, 0, 0, 0, 1.05, 0.9, 0.8)));
     // three chunky fingers
     for (let i = 0; i < 3; i++) {
       const x = (i - 1) * 0.026 * side;
@@ -288,18 +288,18 @@ export function handGeometry(pose = 'relaxed', side = 1) {
       const dir1 = new THREE.Vector3(0, 0, 1).applyQuaternion(q1);
       const L1 = 0.03, L2 = 0.028;
       const mid = base.clone().addScaledVector(dir1, L1);
-      const seg1 = new THREE.CapsuleGeometry(0.0145, L1, 4, 10); seg1.rotateX(Math.PI / 2); seg1.translate(0, 0, L1 / 2);
+      const seg1 = new THREE.CapsuleGeometry(0.0145, L1, 3, 7); seg1.rotateX(Math.PI / 2); seg1.translate(0, 0, L1 / 2);
       const m1 = new THREE.Matrix4().compose(base, q1, new THREE.Vector3(1, 1, 1));
       P.push(prep(seg1, '#fff', m1));
       const q2 = new THREE.Quaternion().setFromEuler(new THREE.Euler(curl + tip, spread, 0, 'YXZ'));
-      const seg2 = new THREE.CapsuleGeometry(0.0135, L2, 4, 10); seg2.rotateX(Math.PI / 2); seg2.translate(0, 0, L2 / 2);
+      const seg2 = new THREE.CapsuleGeometry(0.0135, L2, 3, 7); seg2.rotateX(Math.PI / 2); seg2.translate(0, 0, L2 / 2);
       P.push(prep(seg2, '#fff', new THREE.Matrix4().compose(mid, q2, new THREE.Vector3(1, 1, 1))));
     }
     // thumb
     {
       const base = new THREE.Vector3(-0.04 * side, -0.004, 0.03);
       const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(H.thumb * 0.8, -side * (0.9 - H.thumb * 0.5), side * -0.5, 'YXZ'));
-      const seg = new THREE.CapsuleGeometry(0.016, 0.04, 4, 10); seg.rotateX(Math.PI / 2); seg.translate(0, 0, 0.02);
+      const seg = new THREE.CapsuleGeometry(0.016, 0.04, 3, 7); seg.rotateX(Math.PI / 2); seg.translate(0, 0, 0.02);
       P.push(prep(seg, '#fff', new THREE.Matrix4().compose(base, q, new THREE.Vector3(1, 1, 1))));
     }
     return merge(P);

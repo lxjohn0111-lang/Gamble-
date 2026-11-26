@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Station } from './common.js';
+import { Station, BulbArray } from './common.js';
 import { G, mesh } from '../engine/geo.js';
 import { M } from '../engine/materials.js';
 import { makeCanvas, toTex, cached } from '../engine/textures.js';
@@ -137,13 +137,8 @@ export class BigWheel extends Station {
     wheel.add(pegs);
     mesh(G.sphere(0.12, 20, 14), gold, 0, 0, 0.02, { s: [1, 1, 0.5], parent: wheel });
     // rim bulbs (static ring, chasing)
-    this.bulbs = [];
-    this.bulbOn = M.bulb(0xffe08a, 3); this.bulbOff = M.bulb(0x553311, 0.3);
-    for (let i = 0; i < 40; i++) {
-      const a = (i / 40) * TAU;
-      const b = mesh(G.sphere(0.03, 8, 6), this.bulbOff, Math.cos(a) * (R + 0.12), cy + Math.sin(a) * (R + 0.12), -0.11, { parent: this.group });
-      this.bulbs.push(b);
-    }
+    this.bulbs = new BulbArray(Array.from({ length: 40 }, (_, i) => { const a = (i / 40) * TAU; return new THREE.Vector3(Math.cos(a) * (R + 0.12), cy + Math.sin(a) * (R + 0.12), -0.11); }), 0.03, 0xffe08a, 0x3a2410, 3);
+    this.group.add(this.bulbs.mesh);
     // clapper at the top
     const cl = (this.clapper = new THREE.Group());
     cl.position.set(0, cy + R + 0.12, 0.0);
@@ -282,6 +277,7 @@ export class BigWheel extends Station {
     // bulbs
     this.flashT = Math.max(0, (this.flashT || 0) - dt);
     const st = Math.floor(t * (this.spinning ? 18 : this.flashT > 0 ? 8 : 3));
-    for (let i = 0; i < this.bulbs.length; i++) this.bulbs[i].material = (this.flashT > 0 ? st % 2 === 0 : (i + st) % (this.spinning ? 5 : 10) === 0) ? this.bulbOn : this.bulbOff;
+    for (let i = 0; i < this.bulbs.n; i++) this.bulbs.set(i, this.flashT > 0 ? st % 2 === 0 : (i + st) % (this.spinning ? 5 : 10) === 0);
+    this.bulbs.commit();
   }
 }

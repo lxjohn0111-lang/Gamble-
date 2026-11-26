@@ -176,6 +176,49 @@ export function fixZeroNormals(geo, midY = 0) {
   n.needsUpdate = true;
 }
 
+/** Several rigid parts with their own transforms, drawn as ONE mesh. */
+class RigidSet {
+  constructor(geos, material) {
+    this.parts = geos.map((g) => this._base(g));
+    const total = this.parts.reduce((a, p) => a + p.n, 0);
+    const g = (this.geometry = new THREE.BufferGeometry());
+    this.pos = new THREE.BufferAttribute(new Float32Array(total * 3), 3).setUsage(THREE.DynamicDrawUsage);
+    this.nor = new THREE.BufferAttribute(new Float32Array(total * 3), 3).setUsage(THREE.DynamicDrawUsage);
+    g.setAttribute('position', this.pos); g.setAttribute('normal', this.nor);
+    if (this.parts[0].col) { this.col = new THREE.BufferAttribute(new Float32Array(total * 3), 3); g.setAttribute('color', this.col); }
+    g.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0.9, 0), 1.8);
+    let off = 0;
+    for (const p of this.parts) { p.off = off; off += p.n; p.m = new THREE.Matrix4(); }
+    this.writeColors();
+    this.mesh = new THREE.Mesh(g, material);
+    this.mesh.frustumCulled = true;
+    this._v = new THREE.Vector3(); this._n = new THREE.Matrix3();
+  }
+  _base(geo) {
+    const g = geo.index ? geo.toNonIndexed() : geo;
+    return { n: g.attributes.position.count, p: g.attributes.position.array, nn: g.attributes.normal.array, col: g.attributes.color ? g.attributes.color.array : null };
+  }
+  setGeometry(i, geo) { const b = this._base(geo); const p = this.parts[i]; if (b.n !== p.n) return; p.p = b.p; p.nn = b.nn; if (b.col) { p.col = b.col; this.writeColors(); } }
+  writeColors() { if (!this.col) return; for (const p of this.parts) if (p.col) this.col.array.set(p.col, (p.off || 0) * 3); if (this.col) this.col.needsUpdate = true; }
+  update() {
+    const P = this.pos.array, N = this.nor.array;
+    for (const part of this.parts) {
+      const e = part.m.elements;
+      const n = this._n.getNormalMatrix(part.m).elements;
+      let o = part.off * 3;
+      const src = part.p, sn = part.nn;
+      for (let i = 0; i < part.n * 3; i += 3, o += 3) {
+        const x = src[i], y = src[i + 1], z = src[i + 2];
+        P[o] = e[0] * x + e[4] * y + e[8] * z + e[12]; P[o + 1] = e[1] * x + e[5] * y + e[9] * z + e[13]; P[o + 2] = e[2] * x + e[6] * y + e[10] * z + e[14];
+        const a = sn[i], b = sn[i + 1], c = sn[i + 2];
+        let nx = n[0] * a + n[3] * b + n[6] * c, ny = n[1] * a + n[4] * b + n[7] * c, nz = n[2] * a + n[5] * b + n[8] * c;
+        const l = Math.hypot(nx, ny, nz) || 1; N[o] = nx / l; N[o + 1] = ny / l; N[o + 2] = nz / l;
+      }
+    }
+    this.pos.needsUpdate = true; this.nor.needsUpdate = true;
+  }
+}
+
 // 2-bone IK: returns elbow position into `out`
 const _ikD = new THREE.Vector3(), _ikDir = new THREE.Vector3(), _ikP = new THREE.Vector3();
 function solveIK(root, target, a, b, pole, out) {
@@ -292,7 +335,7 @@ function vneckAlphaMap() {
 // The character
 // ---------------------------------------------------------------------------
 export class Jelly {
-  constructor(outfit) {
+  constructor(outfit, opts = {}) {
     const o = (this.o = outfit);
     shared();
     this.root = new THREE.Group();
@@ -315,13 +358,15 @@ export class Jelly {
     this._buildExtras();
 
     // shadow blob
-    this.blob = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), SHARED.blob);
-    this.blob.rotation.x = -Math.PI / 2; this.blob.position.y = 0.012; this.blob.renderOrder = 1;
-    this.root.add(this.blob);
+    if (opts.blob !== false) {
+      this.blob = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), SHARED.blob);
+      this.blob.rotation.x = -Math.PI / 2; this.blob.position.y = 0.012; this.blob.renderOrder = 1;
+      this.root.add(this.blob);
+    }
 
     this._initState();
     this.root.traverse((m) => { if (m.isMesh) { m.receiveShadow = false; } });
-    this.body.castShadow = true; if (this.shirt) this.shirt.castShadow = true;
+    this.body.castShadow = true;
     this.update(0.016, 0, null);
   }
 
@@ -342,10 +387,10 @@ export class Jelly {
       [headR * 0.95, hc + headR * 0.42], [headR * 0.76, hc + headR * 0.78], [headR * 0.42, hc + headR * 0.98], [0.0, top],
     ];
     const curve = new THREE.SplineCurve(ctrl.map((p) => new THREE.Vector2(p[0], p[1])));
-    const pts = curve.getPoints(56).map((p) => new THREE.Vector2(Math.max(0, p.x), p.y));
+    const pts = curve.getPoints(46).map((p) => new THREE.Vector2(Math.max(0, p.x), p.y));
     pts[0].x = 0; pts[pts.length - 1].x = 0;
     this.profile = pts;
-    const geo = new THREE.LatheGeometry(pts, 40);
+    const geo = new THREE.LatheGeometry(pts, 34);
     geo.scale(1, 1, 0.86);
     geo.computeVertexNormals();
     fixZeroNormals(geo, (top + 0.585) / 2);
@@ -380,7 +425,7 @@ export class Jelly {
       if (s.type !== 'tank' && y > 1.15) r += 0.004;
       pts.push(new THREE.Vector2(r, y));
     }
-    const geo = new THREE.LatheGeometry(pts, 40);
+    const geo = new THREE.LatheGeometry(pts, 32);
     geo.scale(1, 1, 0.86);
     const opts = {};
     if (s.type === 'hawaiian' || s.type === 'bowling') { opts.alphaMap = vneckAlphaMap(); opts.alphaTest = 0.5; }
@@ -438,9 +483,9 @@ export class Jelly {
   // -------------------------------------------------------------- limbs
   _buildLimbs() {
     const o = this.o;
-    this.limbs = new TubeSet(4, 12, 14);
+    this.limbs = new TubeSet(4, 10, 12);
     this.limbMesh = new THREE.Mesh(this.limbs.geometry, this.matLimb);
-    this.limbMesh.castShadow = true;
+    this.limbMesh.castShadow = false;
     this.root.add(this.limbMesh);
     const sl = o.shirt.sleeves;
     if (sl !== 'none') {
@@ -460,23 +505,26 @@ export class Jelly {
 
     // hands
     this.hands = {};
+    this.handSet = new RigidSet([O.handGeometry('relaxed', -1), O.handGeometry('relaxed', 1)], o.gloves ? SHARED.glove : this.matLimb);
+    this.root.add(this.handSet.mesh);
     for (const side of [-1, 1]) {
-      const mat = o.gloves ? SHARED.glove : this.matLimb;
-      const h = new THREE.Mesh(O.handGeometry('relaxed', side), mat);
+      const h = new THREE.Object3D();
       h.scale.setScalar(1.1);
-      h.castShadow = false;
       const hold = new THREE.Object3D(); hold.position.set(0, -0.035, 0.06); h.add(hold);
       this.root.add(h);
-      this.hands[side] = { mesh: h, pose: 'relaxed', hold };
+      this.hands[side] = { mesh: h, pose: 'relaxed', hold, idx: side < 0 ? 0 : 1 };
       if (o.gloves) { // little cuff
         const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.012, 6, 16), SHARED.glove);
         cuff.position.z = -0.005; h.add(cuff);
+        this.detail && this.detail.push(cuff);
       }
     }
-    // feet / shoes
+    // feet / shoes (both shoes in one draw call)
     this.feet = {};
+    this.shoeSet = new RigidSet([O.shoeGeometry(o.shoes.type, o.shoes.color, -1), O.shoeGeometry(o.shoes.type, o.shoes.color, 1)], o.shoes.type === 'loafer' ? SHARED.vcolGloss : SHARED.vcol);
+    this.root.add(this.shoeSet.mesh);
     for (const side of [-1, 1]) {
-      const sh = new THREE.Mesh(O.shoeGeometry(o.shoes.type, o.shoes.color, side), o.shoes.type === 'loafer' ? SHARED.vcolGloss : SHARED.vcol);
+      const sh = new THREE.Object3D();
       this.root.add(sh);
       if (o.shoes.type === 'flipflop') { const f = new THREE.Mesh(O.footGeometry(), this.matLimb); sh.add(f); }
       this.feet[side] = sh;
@@ -490,6 +538,7 @@ export class Jelly {
     head.position.set(0, D.hc, 0);
     this.root.add(head);
     this.attach = [{ obj: head, base: new THREE.Vector3(0, D.hc, 0), baseQ: new THREE.Quaternion() }];
+    this.detail = [];
 
     // Eyes
     const eyeY = D.hc + D.headR * 0.16;
@@ -505,21 +554,26 @@ export class Jelly {
       frame.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), nrm);
       head.add(frame);
       frame.updateMatrix();
-      const bk = new THREE.CylinderGeometry(R, R * 0.98, 0.012, 32); bk.rotateX(Math.PI / 2); bk.translate(0, 0, 0.004); bk.applyMatrix4(frame.matrix);
+      const bk = new THREE.CylinderGeometry(R, R * 0.98, 0.012, 24); bk.rotateX(Math.PI / 2); bk.translate(0, 0, 0.004); bk.applyMatrix4(frame.matrix);
       backs.push(bk);
-      const dm = new THREE.SphereGeometry(R * 1.02, 28, 10, 0, TAU, 0, Math.PI / 2); dm.rotateX(Math.PI / 2); dm.scale(1, 1, 0.5); dm.translate(0, 0, 0.009); dm.applyMatrix4(frame.matrix);
+      const dm = new THREE.SphereGeometry(R * 1.02, 22, 6, 0, TAU, 0, Math.PI / 2); dm.rotateX(Math.PI / 2); dm.scale(1, 1, 0.5); dm.translate(0, 0, 0.009); dm.applyMatrix4(frame.matrix);
       domes.push(dm);
       const rp = R * 0.52;
-      const pupil = new THREE.Mesh(new THREE.CylinderGeometry(rp, rp, 0.004, 24).rotateX(Math.PI / 2), SHARED.pupil);
+      const pupil = new THREE.Object3D();
       pupil.position.z = 0.0125;
+      pupil.userData.geo = new THREE.CylinderGeometry(rp, rp, 0.004, 18).rotateX(Math.PI / 2);
       frame.add(pupil);
       // a tiny specular glint on the pupil plastic
       this.eyes.push({ frame, pupil, R, rp, max: R * 0.9 - rp, p: new THREE.Vector2(0, -(R * 0.9 - rp)), v: new THREE.Vector2(), side });
     }
     head.add(new THREE.Mesh(mergeGeometries(backs.map((g) => g.toNonIndexed())), SHARED.eyeWhite));
+    this.pupilSet = new RigidSet(this.eyes.map((e) => e.pupil.userData.geo), SHARED.pupil);
+    this.pupilSet.geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 0.4);
+    head.add(this.pupilSet.mesh);
     const domeMesh = new THREE.Mesh(mergeGeometries(domes.map((g) => g.toNonIndexed())), SHARED.dome);
     domeMesh.renderOrder = 2;
     head.add(domeMesh);
+    this.domeMesh = domeMesh;
 
     // Brows
     const browMat = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(o.color).multiplyScalar(0.35), roughness: 0.4, clearcoat: 0.6 });
@@ -552,18 +606,20 @@ export class Jelly {
       nose.scale.set(1, 0.85, 0.9);
       nose.position.copy(np).sub(head.position);
       head.add(nose);
+      this.detail.push(nose);
     }
     // Cheeks
     if (o.cheeks) {
+      const parts = [];
       for (const side of [-1, 1]) {
         const a = side * 0.75, y = mouthY + 0.025;
-        const p = this.surface(y, a, new THREE.Vector3(), 0.002);
-        const c = new THREE.Mesh(new THREE.CircleGeometry(0.03, 20), SHARED.cheek);
-        c.position.copy(p).sub(head.position);
-        c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(Math.sin(a), 0, Math.cos(a) / 0.86).normalize());
-        c.scale.set(1.3, 0.8, 1);
-        head.add(c);
+        const p = this.surface(y, a, new THREE.Vector3(), 0.002).sub(head.position);
+        const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(Math.sin(a), 0, Math.cos(a) / 0.86).normalize());
+        parts.push(new THREE.CircleGeometry(0.03, 20).applyMatrix4(new THREE.Matrix4().compose(p, q, new THREE.Vector3(1.3, 0.8, 1))));
       }
+      const c = new THREE.Mesh(mergeGeometries(parts), SHARED.cheek);
+      head.add(c);
+      this.detail.push(c);
     }
     // Hat
     if (o.hat) {
@@ -573,7 +629,7 @@ export class Jelly {
       hat.position.set(0, hatY, -0.01);
       hat.rotation.z = o.hat.tilt || 0;
       hat.rotation.x = -0.06;
-      hat.castShadow = true;
+      hat.castShadow = false;
       head.add(hat);
       this.hat = hat;
       if (o.hat.type === 'propeller') {
@@ -645,24 +701,23 @@ export class Jelly {
     if (s.type === 'hawaiian' || s.type === 'bowling' || s.type === 'polo') {
       const tex = shirtTexture(s);
       const cm = new THREE.MeshPhysicalMaterial({ map: tex, roughness: 0.8, side: THREE.DoubleSide, sheen: 0.5 });
+      const flaps = [];
       for (const side of [-1, 1]) {
         const sh = new THREE.Shape();
         sh.moveTo(0, 0); sh.lineTo(0.075, 0.02); sh.lineTo(0.06, -0.07); sh.lineTo(0.01, -0.03); sh.closePath();
-        const geo = new THREE.ExtrudeGeometry(sh, { depth: 0.006, bevelEnabled: false });
-        const m = new THREE.Mesh(geo, cm);
-        m.scale.set(side, 1, 1);
+        const geo = new THREE.ExtrudeGeometry(sh, { depth: 0.006, bevelEnabled: false }).toNonIndexed();
         const y = 1.26 - 1.235;
-        m.position.set(side * 0.02, y, fz(1.26, 0.012) - 0.02);
-        m.rotation.set(-0.35, side * 0.55, 0);
-        neck.add(m);
+        geo.applyMatrix4(new THREE.Matrix4().compose(new THREE.Vector3(side * 0.02, y, fz(1.26, 0.012) - 0.02), new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.35, side * 0.55, 0)), new THREE.Vector3(side, 1, 1)));
+        flaps.push(geo);
       }
+      const fm = new THREE.Mesh(mergeGeometries(flaps), cm);
+      neck.add(fm); this.detail.push(fm);
       if (s.type !== 'polo') {
-        for (let i = 0; i < 4; i++) {
-          const y = 1.08 - i * 0.11;
-          const b = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.004, 10).rotateX(Math.PI / 2), new THREE.MeshPhysicalMaterial({ color: 0xf5ecd7, roughness: 0.3, clearcoat: 1 }));
-          b.position.set(0, y - 1.05, fz(y, 0.017));
-          chest.add(b);
-        }
+        const bs = [];
+        for (let i = 0; i < 4; i++) { const y = 1.08 - i * 0.11; bs.push(new THREE.CylinderGeometry(0.008, 0.008, 0.004, 10).rotateX(Math.PI / 2).translate(0, y - 1.05, fz(y, 0.017))); }
+        const bm = new THREE.Mesh(mergeGeometries(bs), SHARED.buttonMat || (SHARED.buttonMat = new THREE.MeshPhysicalMaterial({ color: 0xf5ecd7, roughness: 0.3, clearcoat: 1 })));
+        SHARED.buttonMat.userData.shared = true;
+        chest.add(bm); this.detail.push(bm);
       }
     } else if (s.type === 'tee' || s.type === 'tank') {
       const t = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.012, 6, 32), new THREE.MeshPhysicalMaterial({ map: shirtTexture(s), roughness: 0.8 }));
@@ -702,6 +757,8 @@ export class Jelly {
       }
     }
     for (const a of o.acc) {
+      const before = this.root.children.length + neck.children.length + chest.children.length + this.head.children.length;
+      void before;
       if (a === 'bowtie') { const m = new THREE.Mesh(O.bowTieGeometry(o.bowColor || '#b3122e'), SHARED.vcolGloss); m.position.set(0, 1.25 - 1.235, fz(1.25, 0.03)); neck.add(m); }
       if (a === 'chain') { const m = new THREE.Mesh(O.chainGeometry(), SHARED.vcolMetal); m.position.set(0, 0.0, 0.0); m.scale.set(1.15, 1, 1.12); neck.add(m); }
       if (a === 'lei') { const m = new THREE.Mesh(O.leiGeometry(), SHARED.vcol); m.position.set(0, 0.0, 0); m.scale.set(1.15, 1, 1.15); neck.add(m); }
@@ -718,6 +775,15 @@ export class Jelly {
       if (a === 'earring') { const m = new THREE.Mesh(O.earringGeometry(), SHARED.vcolMetal); m.position.set(this.dims.headR * 0.98, -0.07, 0); m.rotation.y = Math.PI / 2; this.head.add(m); }
       if (a === 'earpiece') { const m = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.004, 6, 12, Math.PI * 1.5), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.4 })); m.position.set(this.dims.headR * 0.95, -0.02, 0); m.rotation.y = Math.PI / 2; this.head.add(m); }
       if (a === 'watch') { this.watch = new THREE.Mesh(O.watchGeometry(), SHARED.vcolMetal); this.hands[-1].mesh.add(this.watch); this.watch.position.set(0, 0, -0.03); this.watch.rotation.x = Math.PI / 2; this.watch.scale.setScalar(0.75); }
+    }
+    // small accessories disappear at distance (LOD)
+    const keep = new Set([this.body, this.pants, this.shirt, this.vest, this.limbMesh, this.sleeveMesh, this.legwearMesh, this.handSet && this.handSet.mesh, this.shoeSet && this.shoeSet.mesh, this.hat, this.mouth, this.domeMesh, this.pupilSet && this.pupilSet.mesh]);
+    for (const parent of [neck, chest, this.head, this.root]) for (const ch of parent.children) {
+      if (!ch.isMesh || keep.has(ch) || this.detail.includes(ch)) continue;
+      if (parent === this.head && (ch.material === SHARED.eyeWhite || ch.material === SHARED.mouth)) continue;
+      if (ch.geometry && ch.geometry.type === 'PlaneGeometry' && parent === this.root) continue;
+      if (this.brows.some((b) => b.mesh === ch)) continue;
+      this.detail.push(ch);
     }
   }
 
@@ -780,7 +846,7 @@ export class Jelly {
     const T = this.tgt, C = this.cur, root = this.root;
     const tt = this.time;
     let dist = 0;
-    if (camPos) { dist = camPos.distanceTo(root.position); this.lod = dist > 22 ? 2 : dist > 11 ? 1 : 0; }
+    if (camPos) { dist = camPos.distanceTo(root.position); this.lod = dist > 18 ? 2 : dist > 9 ? 1 : 0; }
 
     // ---- locomotion estimation from root motion
     if (this.firstFrame) { this.prevPos.copy(root.position); this.firstFrame = false; }
@@ -892,8 +958,8 @@ export class Jelly {
     for (const key of ['hips', 'leanX', 'leanZ', 'twist', 'squash', 'puff', 'jump']) C[key] = damp(C[key], T[key], key === 'jump' ? 18 : 9, dt);
     for (const key of ['mw', 'mo', 'mc', 'ma', 'by', 'ba']) C[key] = damp(C[key], T[key], 16, dt);
     C.teeth = T.teeth;
-    if (pl !== this.poseL) { this.poseL = pl; this.hands[-1].mesh.geometry = O.handGeometry(pl, -1); }
-    if (pr !== this.poseR) { this.poseR = pr; this.hands[1].mesh.geometry = O.handGeometry(pr, 1); }
+    if (pl !== this.poseL) { this.poseL = pl; this.handSet.setGeometry(0, O.handGeometry(pl, -1)); }
+    if (pr !== this.poseR) { this.poseR = pr; this.handSet.setGeometry(1, O.handGeometry(pr, 1)); }
 
     // ---- jiggle springs (secondary motion)
     const J = this.jig;
@@ -931,11 +997,20 @@ export class Jelly {
         b.mesh.rotation.z = -b.side * C.ba;
       }
     }
-    for (const b of this.brows) b.mesh.visible = this.lod < 2;
+    if (this.lod !== this._lodApplied) {
+      this._lodApplied = this.lod;
+      for (const b of this.brows) b.mesh.visible = this.lod < 1;
+      for (const d of this.detail) d.visible = this.lod < 1;
+      this.domeMesh.visible = this.lod < 1;
+      this.pupilSet.mesh.visible = this.lod < 2;
+      this.mouth.visible = this.lod < 2;
+      if (this.sleeveMesh) this.sleeveMesh.castShadow = false;
+    }
     this._updateEyes(dt);
     if (this.propeller) this.propeller.rotation.y += dt * (6 + spd * 20);
     if (this.ember) this.ember.material.emissiveIntensity = 2.5 + Math.sin(tt * 3) * 1.2;
-    this.blob.scale.setScalar(1 - Math.min(0.4, jump * 1.5));
+    if (this.blob) this.blob.scale.setScalar(1 - Math.min(0.4, jump * 1.5));
+    this.jumpH = jump;
   }
 
   _deformAttach(a, bx, tw, bz, sq, yOff) {
@@ -1018,6 +1093,11 @@ export class Jelly {
       shoe.rotation.set(sitting ? -0.15 : clamp(lift * 2.4, -0.4, 0.45), side * 0.08, 0);
     }
     this.limbs.commit();
+    for (const side of [-1, 1]) {
+      const hm = this.hands[side].mesh; hm.updateMatrix(); this.handSet.parts[side < 0 ? 0 : 1].m.copy(hm.matrix);
+      const fm = this.feet[side]; fm.updateMatrix(); this.shoeSet.parts[side < 0 ? 0 : 1].m.copy(fm.matrix);
+    }
+    this.handSet.update(); this.shoeSet.update();
     if (this.sleeves) this.sleeves.commit();
     if (this.legwear) this.legwear.commit();
   }
@@ -1053,6 +1133,8 @@ export class Jelly {
       }
       e.pupil.position.x = e.p.x; e.pupil.position.y = e.p.y;
     }
+    this.eyes.forEach((e, i) => { e.pupil.updateMatrix(); e.frame.updateMatrix(); this.pupilSet.parts[i].m.multiplyMatrices(e.frame.matrix, e.pupil.matrix); });
+    this.pupilSet.update();
   }
 
   dispose() {

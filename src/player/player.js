@@ -44,7 +44,7 @@ export class Player {
     const arm = (this.vmArm = new THREE.Group());
     const fore = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.058, 0.42, 16), jelly);
     fore.rotation.x = Math.PI / 2; fore.position.z = 0.17; arm.add(fore);
-    const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.078, 0.082, 0.18, 18, 1, true), sleeveMat);
+    const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.078, 0.082, 0.18, 18, 1, false), sleeveMat);
     sleeve.rotation.x = Math.PI / 2; sleeve.position.z = 0.33; arm.add(sleeve);
     const hand = new THREE.Mesh(handGeometry('hold', 1), jelly);
     hand.scale.setScalar(1.15);
@@ -67,17 +67,17 @@ export class Player {
     wad.add(this.band);
     wad.position.set(0.0, -0.03, -0.04); wad.rotation.set(0.2, 0.3, -0.25);
     arm.add(wad);
-    arm.position.set(0.27, -0.3, -0.5);
-    arm.rotation.set(-0.55, -0.35, 0.25);
+    arm.position.set(0.25, -0.27, -0.46);
+    arm.rotation.set(0.62, -0.42, 0.2);
     arm.scale.setScalar(0.85);
     vm.add(arm);
     // left hand for drinks
     const larm = (this.vmLeft = new THREE.Group());
     const lfore = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.058, 0.42, 16), jelly); lfore.rotation.x = Math.PI / 2; lfore.position.z = 0.17; larm.add(lfore);
-    const lsleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.078, 0.082, 0.18, 18, 1, true), sleeveMat); lsleeve.rotation.x = Math.PI / 2; lsleeve.position.z = 0.33; larm.add(lsleeve);
+    const lsleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.078, 0.082, 0.18, 18, 1, false), sleeveMat); lsleeve.rotation.x = Math.PI / 2; lsleeve.position.z = 0.33; larm.add(lsleeve);
     const lhand = new THREE.Mesh(handGeometry('hold', -1), jelly); lhand.scale.setScalar(1.15); lhand.rotation.set(Math.PI, 0, -Math.PI / 2 - 0.2); lhand.position.z = -0.03; larm.add(lhand);
     this.drinkSlot = new THREE.Group(); this.drinkSlot.position.set(-0.02, 0.02, -0.06); larm.add(this.drinkSlot);
-    larm.position.set(-0.26, -0.5, -0.42); larm.rotation.set(0.1, 0.25, -0.1);
+    larm.position.set(-0.26, -0.5, -0.42); larm.rotation.set(0.62, 0.4, -0.2);
     larm.visible = false;
     vm.add(larm);
     vm.traverse((o) => { if (o.isMesh) { o.renderOrder = 10; o.frustumCulled = false; } });
@@ -184,13 +184,13 @@ export class Player {
     const t = performance.now() / 1000;
     this.reach = damp(this.reach, 0, 6, dt);
     const bx = Math.cos(this.bob * 0.5) * 0.012 * this.bobAmt, by = -Math.abs(Math.sin(this.bob * 0.5)) * 0.016 * this.bobAmt;
-    this.vmArm.position.set(0.27 + bx - this.sway.x * 0.6, -0.3 + by + Math.sin(t * 1.4) * 0.004 + this.sway.y * 0.5 - (sprint && spd > 4 ? 0.08 : 0), -0.5 - this.reach * 0.14);
-    this.vmArm.rotation.set(-0.55 + this.reach * 0.4 + this.sway.y * 2, -0.35 - this.sway.x * 2, 0.25 + bx * 2);
+    this.vmArm.position.set(0.25 + bx - this.sway.x * 0.6, -0.27 + by + Math.sin(t * 1.4) * 0.004 + this.sway.y * 0.5 - (sprint && spd > 4 ? 0.08 : 0), -0.46 - this.reach * 0.14);
+    this.vmArm.rotation.set(0.62 - this.reach * 0.35 + this.sway.y * 2, -0.42 - this.sway.x * 2, 0.2 + bx * 2);
     if (this.vmLeft.visible) {
       this.leftT = (this.leftT || 0) + dt;
       const sip = this.leftT > 1.2 && this.leftT < 2.6 ? Math.sin(((this.leftT - 1.2) / 1.4) * Math.PI) : 0;
       this.vmLeft.position.set(-0.26 - bx - this.sway.x * 0.6 + sip * 0.18, -0.3 + by + sip * 0.18, -0.42 + sip * 0.12);
-      this.vmLeft.rotation.set(0.1 + sip * 0.6, 0.25, -0.1 + sip * 0.4);
+      this.vmLeft.rotation.set(0.62 - sip * 0.3, 0.4, -0.2 + sip * 0.4);
     }
     this.vm.visible = true;
   }

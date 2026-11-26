@@ -14,7 +14,7 @@ const col = (g, w, d, ox = 0, oz = 0) => { g.userData.collider = { w, d, ox, oz 
 // ---------------------------------------------------------------- lighting
 export function chandelier(style = 'crystal', scale = 1) {
   const g = new THREE.Group();
-  const gold = M.gold(), bulb = M.bulb(0xffc98a, 6);
+  const gold = M.gold(), bulb = M.bulb(0xffc98a, 3.2);
   if (style === 'crystal') {
     mesh(G.cyl(0.012, 0.012, 1.2, 8), gold, 0, 0.6, 0, { parent: g });
     mesh(G.sphere(0.09, 16, 12), gold, 0, 0, 0, { parent: g });
@@ -270,7 +270,7 @@ const BOTTLE_PROFILES = {
   champagne: [[0, 0], [0.04, 0], [0.041, 0.012], [0.041, 0.2], [0.032, 0.24], [0.017, 0.27], [0.016, 0.33], [0, 0.335]],
 };
 export const BOTTLE_TYPES = Object.keys(BOTTLE_PROFILES);
-export function bottleGeometry(type) { return smoothLathe('bottle' + type, BOTTLE_PROFILES[type], 24, 16); }
+export function bottleGeometry(type) { return smoothLathe('bottle' + type, BOTTLE_PROFILES[type], 12, 10); }
 const BOTTLE_COLORS = [0x2a5a1e, 0x6a2a0a, 0x9a5a14, 0x1a3a6a, 0xd8e8e0, 0x5a0a1a, 0xc8a030, 0x0a3a2a, 0xb04a10];
 const LABEL_COLORS = [0xf3ead2, 0x111111, 0xc9a24a, 0xb3122e, 0xffffff, 0x1b3d6a];
 
@@ -293,8 +293,8 @@ export function bottleShelf(len, rows = 3, seed = 1, rowH = 0.42) {
   for (const t of BOTTLE_TYPES) {
     const list = byType[t]; if (!list.length) continue;
     const b = new THREE.InstancedMesh(bottleGeometry(t), glass, list.length);
-    const lb = new THREE.InstancedMesh(G.cyl(1, 1, 1, 16, true), label, list.length);
-    const cp = new THREE.InstancedMesh(G.cyl(1, 1, 1, 10), capM, list.length);
+    const lb = new THREE.InstancedMesh(G.cyl(1, 1, 1, 10, true), label, list.length);
+    const cp = new THREE.InstancedMesh(G.cyl(1, 1, 1, 6), capM, list.length);
     const prof = BOTTLE_PROFILES[t];
     const rmax = Math.max(...prof.map((v) => v[0]));
     const top = prof[prof.length - 1][1];
@@ -477,15 +477,17 @@ export function marquee(text, w = 3, h = 0.9, color = '#ffd24a', bg = '#7a0a14')
   const face = new THREE.Mesh(G.plane(w * 0.86, h * 0.62), signMaterial(tex, 1.25));
   face.position.z = 0.08; g.add(face);
   const n = Math.round((w + h) * 2 / 0.14);
-  const bulbs = [];
-  const on = M.bulb(0xffe08a, 4), off = M.bulb(0x553311, 0.3);
+  const pts = [];
   for (let i = 0; i < n; i++) {
     const t = i / n * 2 * (w + h);
     let x, y;
     if (t < w) { x = -w / 2 + t; y = h / 2 - 0.05; } else if (t < w + h) { x = w / 2 - 0.05; y = h / 2 - (t - w); } else if (t < 2 * w + h) { x = w / 2 - (t - w - h); y = -h / 2 + 0.05; } else { x = -w / 2 + 0.05; y = -h / 2 + (t - 2 * w - h); }
-    const b = new THREE.Mesh(G.sphere(0.03, 8, 6), on); b.position.set(x * 0.97, y * 0.95, 0.08); g.add(b); bulbs.push(b);
+    pts.push(new THREE.Vector3(x * 0.97, y * 0.95, 0.08));
   }
-  g.userData.bulbs = bulbs; g.userData.on = on; g.userData.off = off;
+  const inst = new THREE.InstancedMesh(G.sphere(0.03, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }), n);
+  const m4 = new THREE.Matrix4(); pts.forEach((p, i) => { m4.makeTranslation(p.x, p.y, p.z); inst.setMatrixAt(i, m4); inst.setColorAt(i, new THREE.Color(0xffe08a).multiplyScalar(3)); });
+  g.add(inst);
+  g.userData.bulbs = inst; g.userData.on = new THREE.Color(0xffe08a).multiplyScalar(3); g.userData.off = new THREE.Color(0x3a2410);
   g.userData.dynamic = true;
   return g;
 }

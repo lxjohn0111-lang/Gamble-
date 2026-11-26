@@ -342,6 +342,22 @@ export class Screen {
   dispose() { this.tex.dispose(); this.mat.dispose(); }
 }
 
+/** Many small light bulbs in one draw call (instanced, per-bulb on/off colour). */
+export class BulbArray {
+  constructor(positions, radius = 0.012, on = 0xffe08a, off = 0x3a2410, onBoost = 3) {
+    this.n = positions.length;
+    this.mesh = new THREE.InstancedMesh(new THREE.SphereGeometry(radius, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }), this.n);
+    const m4 = new THREE.Matrix4();
+    positions.forEach((p, i) => { m4.makeTranslation(p.x, p.y, p.z); this.mesh.setMatrixAt(i, m4); });
+    this.on = new THREE.Color(on).multiplyScalar(onBoost); this.off = new THREE.Color(off);
+    this.state = new Uint8Array(this.n);
+    for (let i = 0; i < this.n; i++) this.mesh.setColorAt(i, this.off);
+    this.mesh.instanceColor.needsUpdate = true;
+  }
+  set(i, v) { if (this.state[i] === (v ? 1 : 0)) return; this.state[i] = v ? 1 : 0; this.mesh.setColorAt(i, v ? this.on : this.off); this.dirty = true; }
+  commit() { if (this.dirty) { this.mesh.instanceColor.needsUpdate = true; this.dirty = false; } }
+}
+
 /** Dealer button / puck / marker helpers */
 export function puck(on = true) {
   const g = new THREE.Group();

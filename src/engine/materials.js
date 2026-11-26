@@ -47,7 +47,7 @@ export const M = {
   glass: () => get('glass', () => phys({ color: 0xffffff, metalness: 0, roughness: 0.02, transmission: 0, transparent: true, opacity: 0.18, envMapIntensity: 1.5, depthWrite: false, side: THREE.DoubleSide })),
   glassSubtle: () => get('glassSubtle', () => phys({ color: 0xffffff, roughness: 0.1, transparent: true, opacity: 0.06, envMapIntensity: 0.4, specularIntensity: 0.3, depthWrite: false, side: THREE.DoubleSide })),
   glassTint: (hex) => get('glassTint' + hex, () => phys({ color: hex, metalness: 0, roughness: 0.05, transparent: true, opacity: 0.55, envMapIntensity: 1.4, depthWrite: false })),
-  crystal: () => get('crystal', () => phys({ color: 0xffffff, metalness: 0.1, roughness: 0.0, transparent: true, opacity: 0.6, envMapIntensity: 2.5, emissive: 0x442a10, emissiveIntensity: 0.4 })),
+  crystal: () => get('crystal', () => phys({ color: 0xffffff, metalness: 0.1, roughness: 0.05, transparent: true, opacity: 0.45, envMapIntensity: 1.6, emissive: 0x442a10, emissiveIntensity: 0.12 })),
   bottle: (hex) => get('bottle' + hex, () => phys({ color: hex, metalness: 0, roughness: 0.06, transparent: true, opacity: 0.78, envMapIntensity: 1.6, clearcoat: 1, clearcoatRoughness: 0.05 })),
   liquid: (hex) => get('liquid' + hex, () => phys({ color: hex, metalness: 0, roughness: 0.1, transparent: true, opacity: 0.85, emissive: hex, emissiveIntensity: 0.08 })),
   label: (hex) => get('label' + hex, () => std({ color: hex, roughness: 0.6 })),
@@ -87,7 +87,7 @@ export const M = {
   }),
   tiles: (a, b, rx = 4, ry = 4) => get(`tiles:${a}:${b}:${rx}:${ry}`, () => {
     const t = withRepeat(T.tileFloorTexture(a, b), rx, ry);
-    return phys({ map: t.map, normalMap: t.normalMap, roughness: 0.1, clearcoat: 1, clearcoatRoughness: 0.05 });
+    return phys({ map: t.map, normalMap: t.normalMap, roughness: 0.28, clearcoat: 0.8, clearcoatRoughness: 0.16 });
   }),
   damask: (base, fg, rx = 4, ry = 2) => get(`damask:${base}:${fg}:${rx}:${ry}`, () => {
     const t = withRepeat(T.damaskTexture(base, fg), rx, ry);

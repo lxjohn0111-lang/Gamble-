@@ -27,7 +27,7 @@ export const THEMES = {
     music: 'palace', carpet: { style: 'royal', pal: { base: '#4a0a14', a: '#d8a23a', b: '#1d5a5e', c: '#6a0f1f', d: '#f1d27a' } },
     floor: 'carpet', altFloor: 'tiles', wall: () => M.damask('#5a0f1c', '#b8862f', 1, 1), wallScale: [1.6, 1.6], wainscot: () => M.wood('mahogany', 1, 1), trim: () => M.gold(),
     ceiling: () => M.coffer('#2a1810', '#b8913e', 1, 1), ceilScale: [2.2, 2.2], column: 'marble', chandelier: 'crystal', sconce: 'gold', cove: 0xffb060,
-    lightColor: 0xffc890, hemi: [0xffe0b0, 0x200808, 0.3], fog: 0x12060a, fogDensity: 0.012, exposure: 1.05, stool: 'gold', stoolSeat: 0x7a1020, potStyle: 'gold', bg: 0x050203,
+    lightColor: 0xffc890, hemi: [0xffe0b0, 0x200808, 0.26], fog: 0x12060a, fogDensity: 0.012, exposure: 0.88, stool: 'gold', stoolSeat: 0x7a1020, potStyle: 'gold', bg: 0x050203,
   },
   neon: {
     music: 'neon', carpet: { style: 'cosmic', pal: { base: '#07051a', a: '#ff2bd6', b: '#2bf0ff', c: '#7a3cff', d: '#fff23b' } },
@@ -39,7 +39,7 @@ export const THEMES = {
     music: 'lounge', carpet: { style: 'deco', pal: { base: '#0b2a22', a: '#d8b24a', b: '#14453a', c: '#0f3a2e', d: '#f6e3a0' } },
     floor: 'carpet', altFloor: 'tiles', wall: () => M.damask('#0d2a24', '#c9a24a', 1, 1), wallScale: [1.6, 1.6], wainscot: () => M.wood('walnut', 1, 1), trim: () => M.gold(),
     ceiling: () => M.coffer('#f0e6d0', '#c9a24a', 1, 1), ceilScale: [2.5, 2.5], column: 'marble', chandelier: 'crystal', sconce: 'gold', cove: 0xffd090,
-    lightColor: 0xffd8a8, hemi: [0xfff0d8, 0x0a1a14, 0.32], fog: 0x08120f, fogDensity: 0.01, exposure: 1.0, stool: 'gold', stoolSeat: 0x0f3a2e, potStyle: 'black', bg: 0x030605,
+    lightColor: 0xffd8a8, hemi: [0xfff0d8, 0x0a1a14, 0.28], fog: 0x08120f, fogDensity: 0.01, exposure: 0.88, stool: 'gold', stoolSeat: 0x0f3a2e, potStyle: 'black', bg: 0x030605,
   },
 };
 
@@ -291,11 +291,11 @@ export class World {
         spots.push({ x, z, y: r.h - hang - 0.3, room: r, prio: (r.main ? 2 : 1) + w * dd / 400 });
         // warm pool of light on the floor + faint shaft
         const pool = new THREE.Mesh(G.plane(7, 7), M.lightPool(th.lightColor, 0.22));
-        pool.rotation.x = -Math.PI / 2; pool.position.set(x, 0.015, z); this.dynamicRoot.add(pool);
+        pool.rotation.x = -Math.PI / 2; pool.position.set(x, 0.015, z); this.staticRoot.add(pool);
         if (this.quality !== 'low' && r.h > 4) {
           const shaft = new THREE.Mesh(G.cyl(0.9, 2.6, r.h - hang - 0.3, 20, true), M.shaft(th.lightColor, this.def.theme === 'neon' ? 0.02 : 0.04));
           shaft.position.set(x, (r.h - hang - 0.3) / 2, z); shaft.renderOrder = 5;
-          this.dynamicRoot.add(shaft);
+          this.staticRoot.add(shaft);
         }
       }
     }
@@ -411,7 +411,7 @@ export class World {
   update(dt, t) {
     for (const u of this.updaters) u(dt, t);
     if (this.flames) for (const f of this.flames) { const k = 1 + Math.sin(t * 17 + f.id) * 0.08 + Math.sin(t * 31 + f.id * 3) * 0.05; f.scale.y = (f.userData.baseY || (f.userData.baseY = f.scale.y)) * k; }
-    if (this.marquees) for (const m of this.marquees) { const b = m.userData.bulbs; const step = Math.floor(t * 8); for (let i = 0; i < b.length; i++) b[i].material = (i + step) % 3 === 0 ? m.userData.on : (i + step) % 3 === 1 ? m.userData.on : m.userData.off; }
+    if (this.marquees) for (const m of this.marquees) { const b = m.userData.bulbs; const step = Math.floor(t * 8); if (step === m.userData.step) continue; m.userData.step = step; for (let i = 0; i < b.count; i++) b.setColorAt(i, (i + step) % 3 !== 2 ? m.userData.on : m.userData.off); b.instanceColor.needsUpdate = true; }
     if (this.neonSigns) for (const s of this.neonSigns) { const m = s.userData.neonMat; if (!m) continue; if (!m.userData.base) m.userData.base = m.color.clone(); const fl = Math.random() < 0.004 ? 0.25 : 1; m.color.copy(m.userData.base).multiplyScalar(fl * (0.92 + 0.08 * Math.sin(t * 3 + s.id))); }
     if (this.fountains) for (const f of this.fountains) for (const [i, j] of f.userData.jets.entries()) { j.scale.y = 0.5 + 0.15 * Math.sin(t * 6 + i); j.material.opacity = 0.4 + 0.1 * Math.sin(t * 9 + i); }
     if (this.aquariums) for (const a of this.aquariums) for (const f of a.userData.fish) {

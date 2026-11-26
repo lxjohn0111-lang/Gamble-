@@ -10,6 +10,7 @@ import { M, globalUniforms } from '../engine/materials.js';
 import { G } from '../engine/geo.js';
 import { chipStack } from '../games/common.js';
 import { cocktailGlass } from '../world/props.js';
+import { Jelly, randomOutfit } from '../characters/jelly.js';
 import { h } from '../ui/ui.js';
 import { quotaFor, casinoFor } from '../world/days.js';
 
@@ -102,9 +103,10 @@ export class Director {
     for (const st of this.stations) if (st.watchSpot) crowd.watchSpots.push(st.watchSpot);
     for (const st of this.stations) if (st.spawnStaff) st.spawnStaff(crowd);
     this.spawnStaff();
+    this.spawnStatues();
     const extra = state.modifier && state.modifier.extraNpcs ? state.modifier.extraNpcs : 0;
     const qMul = q === 'low' ? 0.6 : q === 'medium' ? 0.8 : 1;
-    crowd.spawnPatrons(Math.round((def.npcs + extra + Math.min(6, state.day - 1)) * qMul));
+    crowd.spawnPatrons(Math.round((def.npcs * 0.8 + extra + Math.min(4, state.day - 1)) * qMul));
     this.spawnPickups(true);
     onProgress(0.95, 'Opening the doors…'); await nextFrame();
     // player
@@ -179,6 +181,22 @@ export class Director {
     }
   }
 
+  spawnStatues() {
+    for (const sp of this.world.statueSpots || []) {
+      const j = new Jelly(randomOutfit(4242, 'boss'), { blob: false });
+      j.setAction('cheer');
+      for (let i = 0; i < 12; i++) j.update(0.05, 0, null);
+      j.setAction(null);
+      j.actionT = 0;
+      const gold = M.gold();
+      j.root.traverse((o) => { if (o.isMesh && o.material !== gold) { const keepEyes = o.material && (o.material.transparent || o.material.color?.getHex() === 0xf4f4f0 || o.material.color?.getHex() === 0x050505); if (!keepEyes) o.material = gold; o.castShadow = true; } });
+      j.root.position.set(sp.x, 1.0, sp.z);
+      j.root.scale.setScalar(1.5);
+      j.root.rotation.y = sp.rot || 0;
+      this.world.dynamicRoot.add(j.root);
+    }
+  }
+
   spawnPickups(initial = false) {
     const w = this.world;
     const n = initial ? 6 + (state.perks.cat || 0) * 4 : 1;
@@ -187,9 +205,10 @@ export class Director {
       if (!p) continue;
       const base = 5 + Math.floor(rand() * 4) * 5 + (rand() < 0.15 ? 50 : 0);
       const amt = Math.round(base * (1 + (state.perks.cat || 0) * 0.5) * (state.modifier && state.modifier.pickupMult ? state.modifier.pickupMult : 1) * (1 + (state.day - 1) * 0.3));
-      const g = chipStack(Math.min(amt, 100), { scatter: 0.01 });
-      g.scale.setScalar(1.6);
-      g.rotation.z = 0.1;
+      const g = new THREE.Group();
+      const chip = chipStack(amt >= 50 ? 100 : amt >= 25 ? 25 : 5).children[0];
+      chip.scale.setScalar(1.6); chip.rotation.z = 0.15; chip.position.y = 0.006;
+      g.add(chip);
       const spark = new THREE.Sprite(M.glow(0xffe08a, 0.8)); spark.scale.set(0.35, 0.35, 1); spark.position.y = 0.06; g.add(spark);
       g.position.set(p[0], 0.002, p[1]);
       this.scene.add(g);

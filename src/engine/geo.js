@@ -100,11 +100,25 @@ export function batchStatic(root, target) {
   root.traverse((o) => {
     if (!o.isMesh || o.isInstancedMesh || o.isSkinnedMesh) return;
     let p = o; while (p) { if (p.userData.dynamic) return; p = p.parent; }
-    if (Array.isArray(o.material)) return;
-    if (o.material.transparent && o.material.blending === THREE.AdditiveBlending) return;
-    const key = o.material.uuid + (o.castShadow ? 'c' : '') + (o.receiveShadow ? 'r' : '');
-    if (!groups.has(key)) groups.set(key, { mat: o.material, cast: o.castShadow, recv: o.receiveShadow, geos: [] });
-    groups.get(key).geos.push(normalizeGeo(o.geometry, o.matrixWorld));
+    const add = (mat, geo) => {
+      const key = mat.uuid + (o.castShadow ? 'c' : '') + (o.receiveShadow ? 'r' : '');
+      if (!groups.has(key)) groups.set(key, { mat, cast: o.castShadow, recv: o.receiveShadow, geos: [] });
+      groups.get(key).geos.push(normalizeGeo(geo, o.matrixWorld));
+    };
+    if (Array.isArray(o.material)) {
+      // split multi-material geometry (e.g. chips: edge + faces) into per-material parts
+      const src = o.geometry;
+      if (!src.groups.length) return;
+      for (const grp of src.groups) {
+        const mat = o.material[grp.materialIndex];
+        if (!mat) continue;
+        const part = new THREE.BufferGeometry();
+        for (const k of ['position', 'normal', 'uv']) if (src.attributes[k]) part.setAttribute(k, src.attributes[k]);
+        if (src.index) part.setIndex(Array.from(src.index.array.slice(grp.start, grp.start + grp.count)));
+        else part.setIndex(Array.from({ length: grp.count }, (_, i) => grp.start + i));
+        add(mat, part);
+      }
+    } else add(o.material, o.geometry);
     remove.push(o);
   });
   for (const o of remove) o.parent && o.parent.remove(o);

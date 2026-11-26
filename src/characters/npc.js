@@ -25,7 +25,7 @@ export class NPC {
   constructor(crowd, role = 'patron', outfit = null) {
     this.crowd = crowd;
     this.role = role;
-    this.jelly = new Jelly(outfit || randomOutfit(npcSeed++ * 17 + 3, role));
+    this.jelly = new Jelly(outfit || randomOutfit(npcSeed++ * 17 + 3, role), { blob: false });
     this.root = this.jelly.root;
     this.rng = makeRng(npcSeed * 13);
     this.state = 'idle';
@@ -198,6 +198,13 @@ export class Crowd {
     this.player = null;
     this._v = new THREE.Vector3();
     this.chatBudget = 0;
+    // one instanced draw call for every NPC's contact shadow
+    const blobGeo = new THREE.PlaneGeometry(0.9, 0.9).rotateX(-Math.PI / 2);
+    const blobMat = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, map: (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(0,0,0,0.6)'); gr.addColorStop(0.5, 'rgba(0,0,0,0.3)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })() });
+    this.blobs = new THREE.InstancedMesh(blobGeo, blobMat, 64);
+    this.blobs.count = 0; this.blobs.frustumCulled = false; this.blobs.renderOrder = 1;
+    scene.add(this.blobs);
+    this._m4 = new THREE.Matrix4(); this._s3 = new THREE.Vector3(); this._q0 = new THREE.Quaternion();
   }
   canChat() { if (this.chatBudget > 0) return false; this.chatBudget = 3.5; return true; }
 
@@ -273,6 +280,15 @@ export class Crowd {
       if (d2 > 900) { n._acc = (n._acc || 0) + dt; if (n._acc < 0.1) continue; n.jelly.update(n._acc, t, cam); n._acc = 0; }
       else n.jelly.update(dt, t, cam);
     }
+    // contact shadows
+    let bi = 0;
+    for (const n of this.npcs) {
+      if (bi >= 64) break;
+      const p = n.root.position, s = n.root.scale.x * (1 - Math.min(0.4, (n.jelly.jumpH || 0) * 1.5));
+      this._m4.compose(this._v.set(p.x, 0.012, p.z), this._q0, this._s3.set(s, 1, s));
+      this.blobs.setMatrixAt(bi++, this._m4);
+    }
+    this.blobs.count = bi; this.blobs.instanceMatrix.needsUpdate = true;
     // bubbles
     const w = window.innerWidth, h = window.innerHeight;
     for (let i = this.bubbles.length - 1; i >= 0; i--) {
@@ -291,6 +307,7 @@ export class Crowd {
   dispose() {
     for (const n of this.npcs) { this.scene.remove(n.root); n.jelly.dispose(); if (n.bubble) n.bubble.remove(); }
     this.npcs = []; this.bubbles = [];
+    this.scene.remove(this.blobs); this.blobs.geometry.dispose(); this.blobs.material.map.dispose(); this.blobs.material.dispose();
   }
 }
 

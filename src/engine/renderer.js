@@ -106,7 +106,7 @@ export class Renderer {
     this.composer.addPass(this.renderPass);
     this.sanitize = new ShaderPass(SanitizeShader);
     this.composer.addPass(this.sanitize);
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(w / 2, h / 2), 0.5, 0.5, 0.92);
+    this.bloom = new UnrealBloomPass(new THREE.Vector2(w / 2, h / 2), 0.42, 0.45, 1.0);
     this.composer.addPass(this.bloom);
     this.output = new OutputPass();
     this.composer.addPass(this.output);
