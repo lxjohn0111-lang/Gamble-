@@ -29,9 +29,13 @@ export class Input {
 
     document.addEventListener('pointerlockchange', () => {
       this.locked = document.pointerLockElement === this.canvas;
+      if (this.locked) this.lockFailed = 0;
       this.listeners.lockchange.forEach((f) => f(this.locked));
     });
-    document.addEventListener('pointerlockerror', () => { this.dragLook = true; });
+    // A refused lock (e.g. right after Esc) is retried on the next click; only fall back
+    // to drag-to-look when the API is missing entirely.
+    this.dragLook = !('requestPointerLock' in canvas);
+    document.addEventListener('pointerlockerror', () => { this.lockFailed = (this.lockFailed || 0) + 1; if (this.lockFailed > 3) this.dragLook = true; });
 
     window.addEventListener('mousemove', (e) => {
       if (this.locked || (this.dragLook && this.mouseDown)) {
@@ -54,8 +58,8 @@ export class Input {
     if (document.pointerLockElement === this.canvas) return;
     try {
       const p = this.canvas.requestPointerLock({ unadjustedMovement: false });
-      if (p && p.catch) p.catch(() => { this.dragLook = true; });
-    } catch (e) { this.dragLook = true; }
+      if (p && p.catch) p.catch(() => {});
+    } catch (e) { /* retried on next click */ }
   }
   exitLock() { if (document.pointerLockElement) document.exitPointerLock(); }
 

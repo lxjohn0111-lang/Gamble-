@@ -134,6 +134,7 @@ class App {
     });
     window.addEventListener('keydown', (e) => {
       if (e.code !== 'Escape' && e.code !== 'KeyP') return;
+      if (e.defaultPrevented) return; // already handled by a UI hotkey (e.g. Leave)
       if (performance.now() - lastUnlock < 300) return;
       if (d.station) return; // the panel's Leave button owns Escape
       if (this.ui.overlayOpen) { if (d.paused && e.code === 'Escape') d.resume(); return; }

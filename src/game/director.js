@@ -44,6 +44,11 @@ export class Director {
       if (m < 1 && this.phase === 'play' && !this.station) this.checkBroke();
     });
     state.on('toast', (msg, kind) => this.ui.toast(msg, kind));
+    state.on('streak', (n, lostAt) => {
+      this.ui.setStreak(n);
+      if ([3, 5, 8, 12].includes(n)) { this.ui.toast(`🔥 HOT STREAK ×${n}! Wins pay +${Math.min(10, (n - 2) * 2)}%`, 'gold'); audio.play('powerup', { vol: 0.6 }); }
+      if (!n && lostAt >= 3) this.ui.toast(`❄️ Streak of ${lostAt} ended.`, 'bad', 1800);
+    });
     state.on('buffs', () => this.ui.setBuffs(state.buffs));
     state.on('lastcall', () => { this.ui.banner('LAST CALL!', '60 minutes until closing', 'red', 2600); audio.play('clock'); });
     state.on('closingSoon', () => { this.ui.toast('⏰ 15 minutes until Big Tony comes to collect!', 'bad', 4000); audio.play('heartbeat'); });

@@ -30,6 +30,8 @@ export class UI {
     const tl = h('div', 'hud-tl');
     this.moneyEl = h('div', 'money', '<div class="coin">$</div><span>$0</span>');
     this.moneyText = this.moneyEl.querySelector('span');
+    this.streakEl = h('div', 'streak');
+    this.moneyEl.append(this.streakEl);
     this.quotaEl = h('div', 'quota', '<div class="lbl"><span>Big Tony wants</span><b>$0</b></div><div class="track"><div class="fill"></div></div>');
     this.dayEl = h('div', 'day-tag');
     this.modEl = h('div', 'mod-tag');
@@ -71,6 +73,10 @@ export class UI {
     else this.displayMoney += d * Math.min(1, dt * 7) + Math.sign(d) * Math.min(Math.abs(d), dt * 20);
     const txt = fmtMoney(Math.round(this.displayMoney));
     if (txt !== this._lastMoneyTxt) { this.moneyText.textContent = txt; this._lastMoneyTxt = txt; }
+  }
+  setStreak(n) {
+    if (n >= 3) { this.streakEl.innerHTML = `🔥×${n}<small>+${Math.min(10, (n - 2) * 2)}%</small>`; this.streakEl.classList.add('on'); this.streakEl.classList.remove('pop'); void this.streakEl.offsetWidth; this.streakEl.classList.add('pop'); }
+    else this.streakEl.classList.remove('on');
   }
   setQuota(money, quota) {
     this.quotaEl.querySelector('b').textContent = fmtMoney(quota);

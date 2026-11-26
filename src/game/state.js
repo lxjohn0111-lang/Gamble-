@@ -69,8 +69,10 @@ export class GameState extends Emitter {
     this.dayLength = 480 + (this.perks.watch || 0) * 60;
     this.flags = { atmUsed: false, stakeDoubled: false, rabbitUsed: false, extraHour: false, loanTaken: 0 };
     this.buffs = [];
+    this.streak = 0;
     this.dayStats = { won: 0, lost: 0, biggest: 0, hands: 0 };
     this.emit('money', this.money, 0);
+    this.emit('streak', 0);
   }
 
   // ------------------------------------------------------------- money
@@ -93,6 +95,8 @@ export class GameState extends Emitter {
     this.money += amount;
     const profit = amount - stake;
     if (profit > 0) {
+      this.streak++;
+      this.emit('streak', this.streak);
       this.stats.wins++; this.stats.totalWon += profit; this.dayStats.won += profit;
       if (profit > this.stats.biggestWin) this.stats.biggestWin = profit;
       if (profit > this.dayStats.biggest) this.dayStats.biggest = profit;
@@ -104,6 +108,7 @@ export class GameState extends Emitter {
   /** Record a loss (for rabbit's foot & stats). Call after a wager resolves to nothing. */
   lost(stake, game) {
     this.dayStats.lost += stake;
+    if (stake > 0 && this.streak) { const s = this.streak; this.streak = 0; this.emit('streak', 0, s); }
     if (this.perks.rabbit && !this.flags.rabbitUsed && stake > 0) {
       this.flags.rabbitUsed = true;
       const refund = Math.min(stake, 1000);
@@ -139,7 +144,8 @@ export class GameState extends Emitter {
     if (this.modifier && this.modifier.slotsMult && game === 'slots') m *= this.modifier.slotsMult;
     return m;
   }
-  luck() { let l = 0; for (const b of this.buffs) if (b.luck) l += b.luck; return l; }
+  luck() { let l = 0; for (const b of this.buffs) if (b.luck) l += b.luck; return l + this.streakBonus(); }
+  streakBonus() { return Math.min(0.1, 0.02 * Math.max(0, (this.streak || 0) - 2)); }
   drunk() { let d = 0; for (const b of this.buffs) if (b.drunk) d = Math.max(d, b.drunk * Math.min(1, b.left / 15)); return d; }
   timeScale() { let s = 1; for (const b of this.buffs) if (b.slow) s *= 1 - b.slow; return s; }
   addBuff(effect, name) { this.buffs.push({ ...effect, left: effect.dur, name }); this.emit('buffs'); }
