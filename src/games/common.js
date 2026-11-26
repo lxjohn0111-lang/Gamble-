@@ -73,7 +73,7 @@ export class Station {
 // ============================================================================
 export const CHIP_COLORS = { 1: ['#f2f2f2', '#2a4ac8'], 5: ['#d8202e', '#ffffff'], 25: ['#1e9a48', '#ffffff'], 100: ['#151515', '#f2f2f2'], 500: ['#7a2ac8', '#ffd24a'], 1000: ['#f2b01e', '#1a1a1a'], 5000: ['#1e8ad8', '#ffffff'] };
 export const CHIP_VALUES = [5000, 1000, 500, 100, 25, 5, 1];
-const CHIP_R = 0.02, CHIP_H = 0.0036;
+const CHIP_R = 0.027, CHIP_H = 0.0048;
 
 function chipMaterials(v) {
   return cached('chipmat' + v, () => {

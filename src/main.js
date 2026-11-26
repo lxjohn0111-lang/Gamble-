@@ -96,7 +96,9 @@ class App {
     this.muted = SDK.muteAudioSetting;
 
     // resume a run in progress or start fresh (no menus: straight into the casino)
-    if (!state.loadRun()) { state.newRun(); state.save(); }
+    const dayParam = +(new URLSearchParams(location.search).get('day') || 0);
+    if (dayParam > 0) { state.newRun(); state.day = dayParam; state.startDay(true); state.money = state.quota * 0.6; }
+    else if (!state.loadRun()) { state.newRun(); state.save(); }
     await d.loadDay((p, msg) => this.setLoading(0.05 + p * 0.95, msg));
     this.setLoading(1, 'Let\'s gamble!');
     SDK.loadingStop();

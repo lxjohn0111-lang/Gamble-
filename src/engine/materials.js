@@ -45,6 +45,7 @@ export const M = {
   blackMetal: () => get('blackMetal', () => std({ color: 0x18181c, metalness: 0.8, roughness: 0.35 })),
   iron: () => get('iron', () => std({ color: 0x2a2726, metalness: 0.9, roughness: 0.55 })),
   glass: () => get('glass', () => phys({ color: 0xffffff, metalness: 0, roughness: 0.02, transmission: 0, transparent: true, opacity: 0.18, envMapIntensity: 1.5, depthWrite: false, side: THREE.DoubleSide })),
+  glassSubtle: () => get('glassSubtle', () => phys({ color: 0xffffff, roughness: 0.1, transparent: true, opacity: 0.06, envMapIntensity: 0.4, specularIntensity: 0.3, depthWrite: false, side: THREE.DoubleSide })),
   glassTint: (hex) => get('glassTint' + hex, () => phys({ color: hex, metalness: 0, roughness: 0.05, transparent: true, opacity: 0.55, envMapIntensity: 1.4, depthWrite: false })),
   crystal: () => get('crystal', () => phys({ color: 0xffffff, metalness: 0.1, roughness: 0.0, transparent: true, opacity: 0.6, envMapIntensity: 2.5, emissive: 0x442a10, emissiveIntensity: 0.4 })),
   bottle: (hex) => get('bottle' + hex, () => phys({ color: hex, metalness: 0, roughness: 0.06, transparent: true, opacity: 0.78, envMapIntensity: 1.6, clearcoat: 1, clearcoatRoughness: 0.05 })),

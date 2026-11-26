@@ -65,7 +65,7 @@ export function halfMoonTable(theme, { R = 1.2, back = -0.55, seats = 5, spread 
   feltGeo.rotateX(-Math.PI / 2);
   const p = feltGeo.attributes.position, uv = feltGeo.attributes.uv;
   for (let i = 0; i < p.count; i++) uv.setXY(i, (p.getX(i) - X0) / W, 1 - (p.getZ(i) - Z0) / D);
-  const feltMat = new THREE.MeshPhysicalMaterial({ map: tex, normalMap: feltTexture(felt).normalMap, roughness: 0.92, sheen: 1, sheenRoughness: 0.6, sheenColor: new THREE.Color(felt).lerp(new THREE.Color(1, 1, 1), 0.3), envMapIntensity: 0.3 });
+  const feltMat = new THREE.MeshPhysicalMaterial({ map: tex, normalMap: feltTexture(felt).normalMap, roughness: 0.92, sheen: 0.4, sheenRoughness: 0.7, sheenColor: new THREE.Color(felt).lerp(new THREE.Color(1, 1, 1), 0.15), envMapIntensity: 0.25 });
   const feltMesh = mesh(feltGeo, feltMat, 0, TABLE_TOP, 0, { parent: S });
   feltMesh.receiveShadow = true;
   // wooden body below the felt
