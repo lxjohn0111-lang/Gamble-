@@ -143,7 +143,7 @@ export function flyTo(tweens, obj, toWorld, { dur = 0.45, arc = 0.12, delay = 0,
 // ============================================================================
 export const SUITS = ['♠', '♥', '♦', '♣'];
 export const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-const CARD_W = 0.063 * 1.25, CARD_H = 0.088 * 1.25;
+const CARD_W = 0.063 * 1.45, CARD_H = 0.088 * 1.45;
 
 function drawPip(g, s, x, y, size, color) { g.fillStyle = color; g.font = `${size}px "Segoe UI Symbol", "DejaVu Sans", Arial, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(s, x, y); }
 const PIP_LAYOUT = {
