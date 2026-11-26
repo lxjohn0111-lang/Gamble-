@@ -473,12 +473,12 @@ export function neonSign(text, color = '#ff3df0', { height = 0.6, font = 'bold 1
 export function marquee(text, w = 3, h = 0.9, color = '#ffd24a', bg = '#7a0a14') {
   const g = new THREE.Group();
   mesh(G.rbox(w, h, 0.15, 0.04), M.lacquer(new THREE.Color(bg).getHex()), 0, 0, 0, { parent: g });
-  const { tex } = textTexture(text, { font: 'bold 150px "Arial Black", Impact, sans-serif', color, stroke: '#3a1a00', strokeWidth: 12, padding: 30, glow: color });
-  const face = new THREE.Mesh(G.plane(w * 0.86, h * 0.62), signMaterial(tex, 2.4));
+  const { tex } = textTexture(text, { font: 'bold 150px "Arial Black", Impact, sans-serif', color, stroke: '#2a0a00', strokeWidth: 14, padding: 30 });
+  const face = new THREE.Mesh(G.plane(w * 0.86, h * 0.62), signMaterial(tex, 1.25));
   face.position.z = 0.08; g.add(face);
   const n = Math.round((w + h) * 2 / 0.14);
   const bulbs = [];
-  const on = M.bulb(0xffe08a, 7), off = M.bulb(0x553311, 0.4);
+  const on = M.bulb(0xffe08a, 4), off = M.bulb(0x553311, 0.3);
   for (let i = 0; i < n; i++) {
     const t = i / n * 2 * (w + h);
     let x, y;

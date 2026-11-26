@@ -305,29 +305,35 @@ export function woodTexture(style = 'mahogany') {
     const S = 512;
     const { c, g } = makeCanvas(S);
     const P = {
-      mahogany: [[0.36, 0.1, 0.06], [0.18, 0.04, 0.02]],
-      walnut: [[0.42, 0.26, 0.15], [0.2, 0.11, 0.06]],
-      oak: [[0.72, 0.52, 0.31], [0.46, 0.3, 0.16]],
+      mahogany: [[0.42, 0.13, 0.07], [0.2, 0.05, 0.025]],
+      walnut: [[0.36, 0.22, 0.13], [0.15, 0.08, 0.045]],
+      oak: [[0.72, 0.52, 0.31], [0.44, 0.28, 0.15]],
       ebony: [[0.12, 0.08, 0.07], [0.04, 0.03, 0.03]],
-      rustic: [[0.55, 0.36, 0.2], [0.26, 0.15, 0.08]],
+      rustic: [[0.42, 0.26, 0.14], [0.18, 0.1, 0.05]],
       bamboo: [[0.86, 0.74, 0.45], [0.6, 0.46, 0.22]],
-    }[style] || [[0.36, 0.1, 0.06], [0.18, 0.04, 0.02]];
+    }[style] || [[0.42, 0.13, 0.07], [0.2, 0.05, 0.025]];
     const hf = new Float32Array(S * S);
     const img = g.createImageData(S, S); const d = img.data;
+    const freq = style === 'rustic' ? 11 : 16;
     for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
       const u = x / S, v = y / S;
-      const warp = fbm(u, v, 3, 4, 11) * 6;
-      const ring = Math.sin((u * 26 + warp + fbm(u, v * 0.25, 4, 2, 3) * 3) * Math.PI);
-      let t = Math.pow(ring * 0.5 + 0.5, 3);
-      const fine = white(x, y >> 3, 9) * 0.25;
-      t = Math.min(1, t * 0.75 + fine + fbm(u, v, 12, 2, 5) * 0.2);
+      // grain runs along v (vertical); bands across u, warped by low-frequency noise
+      const w = fbm(u, v, 3, 3, 11) * 2.2 + fbm(u, v, 1, 2, 4) * 1.5;
+      const gr = u * freq + w;
+      const f = gr - Math.floor(gr);
+      const band = Math.pow(Math.sin(f * Math.PI), 6);
+      const late = Math.min(1, Math.max(0, (f - 0.55) * 3));
+      const pores = white(x, (y / 5) | 0, 9) * 0.22 + white(x >> 1, (y / 23) | 0, 3) * 0.12;
+      const cloud = fbm(u, v, 6, 3, 5);
+      let t = 0.25 + late * 0.35 + band * 0.25 + pores * 0.6 - 0.12 + (cloud - 0.5) * 0.35;
+      t = Math.min(1, Math.max(0, t));
       const i = (y * S + x) * 4;
       const a = P[0], b = P[1];
       d[i] = (a[0] + (b[0] - a[0]) * t) * 255; d[i + 1] = (a[1] + (b[1] - a[1]) * t) * 255; d[i + 2] = (a[2] + (b[2] - a[2]) * t) * 255; d[i + 3] = 255;
-      hf[y * S + x] = 1 - t;
+      hf[y * S + x] = 1 - t * 0.6 - pores * 0.5;
     }
     g.putImageData(img, 0, 0);
-    return { map: toTex(c), normalMap: toTex(normalFromHeight(hf, S, S, 0.6), { srgb: false }) };
+    return { map: toTex(c), normalMap: toTex(normalFromHeight(hf, S, S, 0.8), { srgb: false }) };
   });
 }
 
@@ -336,38 +342,39 @@ export function planksTexture(style = 'rustic') {
     const S = 1024;
     const { c, g } = makeCanvas(S);
     const wood = woodTexture(style).map.image;
+    // rotate grain so it runs along the plank length (x)
+    const rot = makeCanvas(512); rot.g.translate(512, 0); rot.g.rotate(Math.PI / 2); rot.g.drawImage(wood, 0, 0);
+    const pat = g.createPattern(rot.c, 'repeat');
     const rng = makeRng(42);
     const rows = 8, rh = S / rows;
     const hf = new Float32Array(S * S).fill(1);
     for (let j = 0; j < rows; j++) {
       let x = -rng() * S * 0.5;
       while (x < S) {
-        const len = S * (0.35 + rng() * 0.45);
+        const len = S * (0.4 + rng() * 0.5);
         g.save();
         g.beginPath(); g.rect(x, j * rh, len, rh); g.clip();
-        g.translate(x - rng() * 300, j * rh - rng() * 300);
-        g.rotate(Math.PI / 2);
-        g.drawImage(wood, 0, -S, S, S); g.drawImage(wood, S, -S, S, S);
-        g.restore();
-        const tint = 0.82 + rng() * 0.3;
-        g.fillStyle = `rgba(${tint > 1 ? 255 : 0},${tint > 1 ? 220 : 0},${tint > 1 ? 160 : 0},${Math.abs(1 - tint) * 0.6})`;
+        const m = new DOMMatrix().translate(rng() * 512, rng() * 512).scale(0.5, 0.5);
+        pat.setTransform(m);
+        g.fillStyle = pat; g.fillRect(x, j * rh, len, rh);
+        const tint = 0.8 + rng() * 0.35;
+        g.fillStyle = tint > 1 ? `rgba(255,200,140,${(tint - 1) * 0.5})` : `rgba(0,0,0,${(1 - tint) * 0.7})`;
         g.fillRect(x, j * rh, len, rh);
-        g.fillStyle = 'rgba(20,10,4,0.85)';
-        g.fillRect(x, j * rh, 3, rh);
-        // nails
+        g.restore();
+        g.fillStyle = 'rgba(15,8,3,0.9)'; g.fillRect(x, j * rh, 3, rh);
         for (const ny of [rh * 0.25, rh * 0.75]) {
-          g.fillStyle = '#2a2420'; g.beginPath(); g.arc(x + 14, j * rh + ny, 4, 0, TAU); g.fill();
-          g.fillStyle = '#8f8a80'; g.beginPath(); g.arc(x + 13, j * rh + ny - 1, 1.6, 0, TAU); g.fill();
+          g.fillStyle = '#1a1612'; g.beginPath(); g.arc(x + 14, j * rh + ny, 4, 0, TAU); g.fill();
+          g.fillStyle = '#6f6a60'; g.beginPath(); g.arc(x + 13, j * rh + ny - 1, 1.6, 0, TAU); g.fill();
         }
-        for (let yy = Math.floor(j * rh); yy < Math.min(S, j * rh + 4); yy++) for (let xx = Math.max(0, Math.floor(x)); xx < Math.min(S, x + 4); xx++) hf[yy * S + xx] = 0;
+        for (let yy = Math.floor(j * rh); yy < Math.min(S, j * rh + rh); yy++) for (let xx = Math.max(0, Math.floor(x)); xx < Math.min(S, x + 3); xx++) hf[yy * S + xx] = 0;
         x += len;
       }
-      g.fillStyle = 'rgba(15,8,3,0.9)'; g.fillRect(0, j * rh, S, 3);
+      g.fillStyle = 'rgba(10,5,2,0.95)'; g.fillRect(0, j * rh, S, 3);
       for (let yy = j * rh; yy < j * rh + 3; yy++) for (let xx = 0; xx < S; xx++) hf[yy * S + xx] = 0;
     }
     const lum = heightFromCanvas(c);
-    for (let i = 0; i < hf.length; i++) hf[i] = hf[i] * 0.7 + lum[i] * 0.3;
-    return { map: toTex(c), normalMap: toTex(normalFromHeight(hf, S, S, 1.4), { srgb: false }) };
+    for (let i = 0; i < hf.length; i++) hf[i] = hf[i] * 0.75 + lum[i] * 0.25;
+    return { map: toTex(c), normalMap: toTex(normalFromHeight(hf, S, S, 1.6), { srgb: false }) };
   });
 }
 
