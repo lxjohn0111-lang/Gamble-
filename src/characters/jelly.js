@@ -705,7 +705,7 @@ export class Jelly {
       for (const side of [-1, 1]) {
         const sh = new THREE.Shape();
         sh.moveTo(0, 0); sh.lineTo(0.075, 0.02); sh.lineTo(0.06, -0.07); sh.lineTo(0.01, -0.03); sh.closePath();
-        const geo = new THREE.ExtrudeGeometry(sh, { depth: 0.006, bevelEnabled: false }).toNonIndexed();
+        const geo = new THREE.ExtrudeGeometry(sh, { depth: 0.006, bevelEnabled: false });
         const y = 1.26 - 1.235;
         geo.applyMatrix4(new THREE.Matrix4().compose(new THREE.Vector3(side * 0.02, y, fz(1.26, 0.012) - 0.02), new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.35, side * 0.55, 0)), new THREE.Vector3(side, 1, 1)));
         flaps.push(geo);
