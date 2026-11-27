@@ -29,37 +29,54 @@ export class Input {
 
     document.addEventListener('pointerlockchange', () => {
       this.locked = document.pointerLockElement === this.canvas;
-      if (this.locked) this.lockFailed = 0;
+      if (this.locked) { this.lockFailed = 0; this._clickLock = false; }
       this.listeners.lockchange.forEach((f) => f(this.locked));
     });
     // A refused lock (e.g. right after Esc) is retried on the next click; only fall back
     // to drag-to-look when the API is missing entirely.
     this.dragLook = !('requestPointerLock' in canvas);
-    document.addEventListener('pointerlockerror', () => { this.lockFailed = (this.lockFailed || 0) + 1; if (this.lockFailed > 3) this.dragLook = true; });
+    document.addEventListener('pointerlockerror', () => this._lockRefused());
 
     window.addEventListener('mousemove', (e) => {
       if (this.locked || (this.dragLook && this.mouseDown)) {
         this.mouseDX += e.movementX || 0;
         this.mouseDY += e.movementY || 0;
+        if (this.dragLook && this.mouseDown) { this._dragDist += Math.abs(e.movementX || 0) + Math.abs(e.movementY || 0); if (this._dragDist > 30) this.dragged = true; }
       }
     });
     canvas.addEventListener('mousedown', (e) => {
-      if (e.button === 0) { this.mouseDown = true; this.clicked = true; }
+      if (e.button === 0) { this.mouseDown = true; this.clicked = true; this._dragDist = 0; this._downT = performance.now(); }
     });
-    window.addEventListener('mouseup', (e) => { if (e.button === 0) this.mouseDown = false; });
+    window.addEventListener('mouseup', (e) => {
+      if (e.button !== 0) return;
+      if (this.mouseDown && this._dragDist < 6 && performance.now() - this._downT < 450) this.tapped = true;
+      this.mouseDown = false;
+    });
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     window.addEventListener('wheel', (e) => { if (this.locked) e.preventDefault(); }, { passive: false });
   }
 
   on(ev, fn) { this.listeners[ev].push(fn); }
 
-  requestLock() {
-    if (this.isTouch) return;
+  /** Ask for pointer lock. If the browser frame refuses it twice after real clicks, fall back to drag-to-look. */
+  requestLock(fromClick = false) {
+    if (this.isTouch || this.dragLook) return;
     if (document.pointerLockElement === this.canvas) return;
+    if (fromClick) {
+      this._clickLock = true;
+      clearTimeout(this._lockCheck);
+      this._lockCheck = setTimeout(() => { if (this._clickLock && document.pointerLockElement !== this.canvas) this._lockRefused(); }, 700);
+    }
     try {
       const p = this.canvas.requestPointerLock({ unadjustedMovement: false });
       if (p && p.catch) p.catch(() => {});
     } catch (e) { /* retried on next click */ }
+  }
+  _lockRefused() {
+    if (!this._clickLock) return;
+    this._clickLock = false;
+    this.lockFailed = (this.lockFailed || 0) + 1;
+    if (this.lockFailed >= 2) this.dragLook = true;
   }
   exitLock() { if (document.pointerLockElement) document.exitPointerLock(); }
 
@@ -70,7 +87,7 @@ export class Input {
     this.mouseDX = this.mouseDY = 0; this.touch.lookDX = this.touch.lookDY = 0;
     return [dx * this.sensitivity, dy * this.sensitivity];
   }
-  endFrame() { this.pressed.clear(); this.clicked = false; }
+  endFrame() { this.pressed.clear(); this.clicked = false; this.tapped = false; }
 
   /** Movement vector in local space (x right, y forward). */
   moveAxis() {

@@ -72,6 +72,8 @@ class App {
     // SDK first (bounded wait so a blocked SDK never stalls the game)
     await Promise.race([SDK.init(), wait(4000)]);
     SDK.loadingStart();
+    // Saves are read only now, after SDK.init(), so they come from the CrazyGames data module.
+    state.loadBest();
     this.setLoading(0.03, 'Counting chips…');
 
     const renderer = (this.renderer = new Renderer(this.canvas));
@@ -123,7 +125,7 @@ class App {
     window.addEventListener('pointerdown', startAudio);
     window.addEventListener('keydown', startAudio);
     this.canvas.addEventListener('click', () => {
-      if (d.phase === 'play' && !d.paused && !d.station && !this.ui.overlayOpen) input.requestLock();
+      if (d.phase === 'play' && !d.paused && !d.station && !this.ui.overlayOpen) input.requestLock(true);
     });
     let lastUnlock = 0;
     input.on('lockchange', (locked) => {
@@ -141,9 +143,11 @@ class App {
       d.togglePause();
     });
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden) { audio.suspend(); if (d.phase === 'play' && !d.paused && !this.ui.overlayOpen && !d.station) d.togglePause(); }
+      if (document.hidden) { state.flushSave(); audio.suspend(); if (d.phase === 'play' && !d.paused && !this.ui.overlayOpen && !d.station) d.togglePause(); }
       else audio.resume();
     });
+    window.addEventListener('pagehide', () => state.flushSave());
+    window.addEventListener('beforeunload', () => state.flushSave());
   }
 
   loop() {

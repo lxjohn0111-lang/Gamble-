@@ -77,19 +77,27 @@ class SDKWrapper {
     });
   }
 
-  // ---- persistent data (synced to the CrazyGames account when available)
+  // ---- persistent data ---------------------------------------------------
+  // On CrazyGames every save goes through the SDK data module (SDK.data), which
+  // stores it for the player and syncs it to their CrazyGames account. Plain
+  // localStorage is used only when the game runs outside CrazyGames.
+  get cloudData() { return !!(this.ready && this.sdk && this.sdk.data && this.environment !== 'disabled'); }
   getItem(key) {
-    try {
-      if (this.ready && this.sdk.data) return this.sdk.data.getItem(LS_PREFIX + key);
-    } catch (e) { /* fall through */ }
+    if (this.cloudData) {
+      try { return this.sdk.data.getItem(LS_PREFIX + key); } catch (e) { console.warn('[Gamble] SDK.data.getItem failed', e); }
+    }
     try { return localStorage.getItem(LS_PREFIX + key); } catch (e) { return null; }
   }
   setItem(key, value) {
-    try { if (this.ready && this.sdk.data) { this.sdk.data.setItem(LS_PREFIX + key, value); return; } } catch (e) { /* fall through */ }
-    try { localStorage.setItem(LS_PREFIX + key, value); } catch (e) { /* ignore */ }
+    if (this.cloudData) {
+      try { this.sdk.data.setItem(LS_PREFIX + key, String(value)); return true; } catch (e) { console.warn('[Gamble] SDK.data.setItem failed', e); }
+    }
+    try { localStorage.setItem(LS_PREFIX + key, String(value)); return true; } catch (e) { return false; }
   }
   removeItem(key) {
-    try { if (this.ready && this.sdk.data) { this.sdk.data.removeItem(LS_PREFIX + key); return; } } catch (e) { /* fall through */ }
+    if (this.cloudData) {
+      try { this.sdk.data.removeItem(LS_PREFIX + key); return; } catch (e) { console.warn('[Gamble] SDK.data.removeItem failed', e); }
+    }
     try { localStorage.removeItem(LS_PREFIX + key); } catch (e) { /* ignore */ }
   }
 }

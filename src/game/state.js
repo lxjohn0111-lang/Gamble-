@@ -182,7 +182,7 @@ export class GameState extends Emitter {
     const data = { v: 2, day: this.day, money: this.money, perks: this.perks, stats: this.stats, loan: this.loan, loanDue: this.loanDue, quota: this.quota, stake: this.stake, timeMin: this.timeMin, dayLength: this.dayLength, flags: this.flags, runSeed: this.runSeed, dayStartMoney: this.dayStartMoney, dayStats: this.dayStats };
     SDK.setItem('run', JSON.stringify(data));
   }
-  flushSave() { if (this._dirty) { this._lastSave = 0; this.save(); } }
+  flushSave() { this._lastSave = 0; this.save(); }
   loadRun() {
     try {
       const raw = SDK.getItem('run');

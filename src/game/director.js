@@ -136,8 +136,9 @@ export class Director {
   intro() {
     const def = state.casino;
     this.ui.intro(state.day, def.name, state.quota, def.tagline, state.modifier);
-    if (state.day === 1 && !this._tutorialShown) {
+    if (state.day === 1 && !this._tutorialShown && SDK.getItem('tutorial') !== '1') {
       this._tutorialShown = true;
+      SDK.setItem('tutorial', '1');
       setTimeout(() => this.ui.toast('🖱️ Click to look around · <b>WASD</b> to walk · <b>SHIFT</b> to run · <b>E</b> to play', '', 6500), 1500);
       setTimeout(() => this.ui.toast('💰 Make Big Tony\'s quota, then leave through the <b>EXIT</b> before 4:00 AM', 'gold', 6500), 8000);
       setTimeout(() => this.ui.toast('🍸 Drinks at the bar give luck buffs · ✨ Look for dropped chips on the floor', '', 6000), 15000);
@@ -262,8 +263,10 @@ export class Director {
     const f = this.app.renderer.grade.uniforms.uFlash.value;
     f.set(this.flashColor.r, this.flashColor.g, this.flashColor.b, this.flashA);
     // hints
-    const needLock = this.phase === 'play' && !this.paused && !this.station && !this.input.locked && !this.input.isTouch && !this.ui.overlayOpen && !this.input.dragLook;
-    if (needLock) this.ui.hint('<b>Click</b> to look around'); else this.ui.hideHint();
+    const free = this.phase === 'play' && !this.paused && !this.station && !this.input.isTouch && !this.ui.overlayOpen;
+    if (free && !this.input.locked && !this.input.dragLook) this.ui.hint('<b>Click</b> to look around');
+    else if (free && this.input.dragLook && !this.input.dragged) this.ui.hint('Hold the <b>left mouse button</b> and drag to look around');
+    else this.ui.hideHint();
   }
 
   updatePickups(dt, t) {
@@ -316,7 +319,7 @@ export class Director {
     }
     if (best) {
       this.ui.prompt(best.label, best.sub, this.input.isTouch ? 'USE' : 'E');
-      if (this.input.hit('KeyE') || this.input.hit('Enter') || (this.input.clicked && this.input.locked) || this._touchUse) { this._touchUse = false; best.use(); }
+      if (this.input.hit('KeyE') || this.input.hit('Enter') || (this.input.clicked && this.input.locked) || (this.input.tapped && this.input.dragLook) || this._touchUse) { this._touchUse = false; best.use(); }
     } else this.ui.hidePrompt();
     this._touchUse = false;
   }
@@ -695,7 +698,12 @@ export class Director {
     card.append(help);
     const row = h('div', 'center');
     row.append(this.ui.button('Resume', 'big green', () => this.resume()));
-    row.append(this.ui.button('Abandon run', 'dark', () => { if (confirm('Abandon this run? Your progress will be lost.')) { this.resume(); this.gameOver('broke'); } }));
+    let armed = false;
+    const abandon = this.ui.button('Abandon run', 'dark', () => {
+      if (!armed) { armed = true; abandon.textContent = 'Click again to abandon'; setTimeout(() => { armed = false; abandon.textContent = 'Abandon run'; }, 3000); return; }
+      this.resume(); this.gameOver('broke');
+    });
+    row.append(abandon);
     card.append(row);
     this.ui.overlay(card, { allowHotkeys: false });
   }
