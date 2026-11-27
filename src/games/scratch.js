@@ -78,7 +78,7 @@ export class ScratchKiosk extends Station {
   enter() {
     super.enter();
     const ui = this.ui;
-    const p = (this.panel = ui.openPanel({ title: 'Scratch-O-Matic', limits: 'Scratch the silver foil with your mouse', onLeave: () => this.ctx.director.leaveStation() }));
+    const p = (this.panel = ui.openPanel({ title: 'Scratch-O-Matic', limits: ui.isTouch ? 'Scratch the silver foil with your finger' : 'Scratch the silver foil with your mouse', onLeave: () => this.ctx.director.leaveStation() }));
     this.area = h('div', 'scratch-wrap');
     const buy = h('div', 'row');
     for (const t of this.tickets) {

@@ -262,6 +262,7 @@ export class Crowd {
 
   showBubble(npc, text, dur) {
     if (npc.bubble) npc.bubble.remove();
+    npc.bubbleSize = null;
     const el = document.createElement('div');
     el.className = 'bubble';
     el.textContent = text;
@@ -297,10 +298,19 @@ export class Crowd {
       if (n.bubbleT <= 0 || !n.bubble) { if (n.bubble) n.bubble.remove(); n.bubble = null; this.bubbles.splice(i, 1); continue; }
       const v = this._v.set(n.root.position.x, n.root.position.y + (n.jelly.dims.top + 0.35) * n.root.scale.y + n.jelly.cur.hips, n.root.position.z).project(this.camera);
       const vis = v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1 && n.root.position.distanceToSquared(cam) < 260;
-      if (!vis) { n.bubble.style.display = 'none'; continue; }
+      let bx = ((v.x + 1) / 2) * w, by = ((1 - v.y) / 2) * h;
+      // stay inside the game view: hidden behind the game panel, clear of the HUD corners
+      const fr = this.ui.free || { x: 0, y: 0, w, h };
+      if (!vis || bx < fr.x - 20 || bx > fr.x + fr.w + 20 || by > fr.y + fr.h + 30) { n.bubble.style.display = 'none'; continue; }
       n.bubble.style.display = '';
-      n.bubble.style.left = ((v.x + 1) / 2) * w + 'px';
-      n.bubble.style.top = ((1 - v.y) / 2) * h + 'px';
+      if (!n.bubbleSize) n.bubbleSize = [n.bubble.offsetWidth || 140, n.bubble.offsetHeight || 32];
+      const [bw, bh] = n.bubbleSize;
+      bx = Math.min(Math.max(bx, fr.x + bw / 2 + 6), fr.x + fr.w - bw / 2 - 6);
+      for (const r of this.ui.hudRects || []) {
+        if (bx + bw / 2 > r.left - 4 && bx - bw / 2 < r.right + 4 && by - bh < r.bottom + 4 && by > r.top - 4) by = r.bottom + bh + 10;
+      }
+      n.bubble.style.left = bx + 'px';
+      n.bubble.style.top = by + 'px';
     }
   }
 

@@ -121,7 +121,7 @@ export class Baccarat extends Station {
     const ui = this.ui;
     const p = (this.panel = ui.openPanel({ title: 'Baccarat', limits: '', onLeave: () => this.ctx.director.leaveStation() }));
     this.chipCtl = ui.betControl({ min: this.limits[0], max: this.limits[1], value: this.chip, getMoney: () => this.state.money, onChange: (v) => (this.chip = v), label: 'Chip' });
-    const grid = h('div', 'betgrid'); grid.style.gridTemplateColumns = 'repeat(5, 1fr)';
+    const grid = ui.grid(5, 3);
     this.cells = {};
     for (const b of BETS) {
       const cell = h('div', 'betcell interactive', `<div class="nm" style="color:${b.color}">${b.name}</div><div class="od">${b.pay === 0.95 ? '19:20' : b.pay + ':1'}</div>`);

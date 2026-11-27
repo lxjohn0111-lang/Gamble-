@@ -26,7 +26,7 @@ export class VideoPoker extends Station {
     this.footprint = { w: 0.7, d: 0.62, ox: 0, oz: 0 };
     this.interactLocal = new THREE.Vector3(0, 0, 1.0);
     this.interactR = 1.1;
-    this.camLocal = { pos: new THREE.Vector3(0, 1.42, 0.78), look: new THREE.Vector3(0, 1.25, 0) };
+    this.camLocal = { pos: new THREE.Vector3(0, 1.44, 0.8), look: new THREE.Vector3(0, 1.3, 0) };
     this.phase = 'idle';
     this.hand = []; this.held = [false, false, false, false, false];
     this.shoe = new Shoe(1);
@@ -128,10 +128,10 @@ export class VideoPoker extends Station {
       const u = hit.uv.x * 1024, v = (1 - hit.uv.y) * 768;
       if (v > 320 && v < 580) { const i = Math.floor((u - 20) / 195); if (i >= 0 && i < 5) this.toggleHold(i); }
     };
-    this.ctx.director.app.canvas.addEventListener('mousedown', this.onDown);
+    this.ctx.director.app.canvas.addEventListener('pointerdown', this.onDown);
     this.refresh();
   }
-  leave() { super.leave(); this.ctx.director.app.canvas.removeEventListener('mousedown', this.onDown); }
+  leave() { super.leave(); this.ctx.director.app.canvas.removeEventListener('pointerdown', this.onDown); }
   canLeave() { return this.phase === 'idle' || this.phase === 'done'; }
   refresh() {
     if (!this.panel) return;

@@ -17,6 +17,9 @@ export class UI {
     this.hotkeys = new Map();
     this.displayMoney = 0; this.targetMoney = 0;
     this.build();
+    this.updateLayout();
+    window.addEventListener('resize', () => this.updateLayout());
+    window.addEventListener('orientationchange', () => setTimeout(() => this.updateLayout(), 50));
     window.addEventListener('keydown', (e) => {
       if (this.overlayOpen && !this.overlayAllowsHotkeys) return;
       const k = this.hotkeys.get(e.code);
@@ -37,11 +40,17 @@ export class UI {
     this.modEl = h('div', 'mod-tag');
     tl.append(this.moneyEl, this.quotaEl, this.dayEl, this.modEl);
     const tr = h('div', 'hud-tr');
+    const trRow = h('div', 'tr-row');
     this.clockEl = h('div', 'clock', '8:00 PM');
+    this.pauseBtn = h('button', 'pausebtn', '<i></i><i></i>');
+    this.pauseBtn.setAttribute('aria-label', 'Pause');
+    this.pauseBtn.addEventListener('click', (e) => { e.stopPropagation(); audio.play('click'); this.onPause && this.onPause(); });
+    trRow.append(this.clockEl, this.pauseBtn);
     this.clockSub = h('div', 'clock-sub', 'closing 4:00 AM');
     this.buffEl = h('div', 'buffs');
     this.perkEl = h('div', 'perkbar');
-    tr.append(this.clockEl, this.clockSub, this.buffEl, this.perkEl);
+    tr.append(trRow, this.clockSub, this.buffEl, this.perkEl);
+    this.hudTL = tl; this.hudTR = tr;
     this.cross = h('div', 'crosshair');
     this.promptEl = h('div', 'prompt');
     this.toastsEl = h('div', 'toasts');
@@ -49,6 +58,59 @@ export class UI {
     this.labelsEl = h('div', 'floaters');
     this.hud.append(tl, tr, this.cross, this.promptEl);
     r.append(this.labelsEl, this.hud, this.floatersEl, this.toastsEl);
+  }
+
+  /**
+   * Layout mode, set as a class on <html>:
+   *  ui-wide  - desktop / tablet: game panel docked at the bottom
+   *  ui-side  - phone in landscape (short screen): game panel docked on the right
+   *  ui-sheet - phone in portrait: game panel is a bottom sheet
+   * plus ui-compact for small screens (smaller HUD, chips and buttons).
+   */
+  updateLayout() {
+    const w = window.innerWidth, h = window.innerHeight;
+    const mode = w > h && h < 560 ? 'side' : w <= h && w < 700 ? 'sheet' : 'wide';
+    const compact = mode !== 'wide' || Math.min(w, h) < 600;
+    const de = document.documentElement;
+    if (mode !== this.mode) { de.classList.remove('ui-wide', 'ui-side', 'ui-sheet'); de.classList.add('ui-' + mode); this.mode = mode; }
+    de.classList.toggle('ui-compact', compact);
+    this.compact = compact;
+  }
+  setTouch(v) { document.documentElement.classList.toggle('is-touch', !!v); this.isTouch = !!v; }
+  /** Bottom edge (px) of the top HUD row, so the camera framing can keep the game below it. */
+  hudBottom() {
+    if (!this.hud || this.hud.style.display === 'none') return 0;
+    const a = this.moneyEl.getBoundingClientRect(), b = this.clockEl.getBoundingClientRect();
+    return Math.max(a.bottom, b.bottom);
+  }
+  /** Screen rectangle not covered by the game panel (CSS px). */
+  freeRect() {
+    const W = window.innerWidth, H = window.innerHeight;
+    const r = { x: 0, y: 0, w: W, h: H, panel: false };
+    // HUD corner boxes, cached for world labels (speech bubbles keep clear of them)
+    this.hudRects = this.hud.style.display === 'none' ? [] : [this.hudTL.getBoundingClientRect(), this.hudTR.getBoundingClientRect()];
+    const p = this.panel && this.panel.el;
+    if (!p || !p.isConnected) return r;
+    const b = p.getBoundingClientRect();
+    r.panel = true;
+    if (b.left > W * 0.3 && b.height > H * 0.5) r.w = Math.max(W * 0.3, b.left - 4); // docked right
+    else r.h = Math.max(H * 0.28, Math.min(H, b.top) - 4); // docked at the bottom
+    if (this.mode === 'sheet') { const t = Math.min(this.hudBottom() + 4, r.h * 0.3); r.y = t; r.h -= t; }
+    return r;
+  }
+  /** Publish the free area as CSS variables (banners and toasts centre on it). */
+  setFreeVars(x, y, w, h) {
+    this.free = { x, y, w, h };
+    const st = this.root.style;
+    st.setProperty('--free-x', x.toFixed(0) + 'px'); st.setProperty('--free-y', y.toFixed(0) + 'px');
+    st.setProperty('--free-w', w.toFixed(0) + 'px'); st.setProperty('--free-h', h.toFixed(0) + 'px');
+  }
+  /** Bet grid with a desktop column count and a compact (phone) column count. */
+  grid(cols, compactCols = cols, extra = '') {
+    const g = h('div', 'betgrid' + (extra ? ' ' + extra : ''));
+    g.style.setProperty('--cols', cols);
+    g.style.setProperty('--ccols', compactCols);
+    return g;
   }
 
   hudVisible(v) { this.hud.style.display = v ? '' : 'none'; }
@@ -153,19 +215,21 @@ export class UI {
     this.closePanel();
     const p = h('div', 'station-panel');
     const head = h('div', 'ph');
-    const t = h('div', '', `<h3>${title}</h3><div class="lim">${limits}</div>`);
+    const t = h('div', 'ph-title', `<h3>${title}</h3><div class="lim">${limits}</div>`);
     const msg = h('div', 'msg');
-    const leave = this.button('Leave', 'dark small', () => onLeave && onLeave(), 'Escape', 'Esc');
+    const leave = this.button('Leave', 'dark small ph-leave', () => onLeave && onLeave(), 'Escape', 'Esc');
     head.append(t, msg, leave);
     const body = h('div', 'pbody');
     p.append(head, body);
     this.root.append(p);
+    document.documentElement.classList.add('panel-open');
     this.panel = { el: p, body, msgEl: msg, setTitle: (s) => { t.querySelector('h3').textContent = s; }, setLimits: (s) => { t.querySelector('.lim').textContent = s; } };
     this.panel.msg = (text, cls = '') => { msg.className = 'msg ' + cls; msg.innerHTML = text; };
     return this.panel;
   }
   closePanel() {
     if (this.panel) { this.panel.el.remove(); this.panel = null; }
+    document.documentElement.classList.remove('panel-open');
     for (const [k, b] of [...this.hotkeys]) if (!document.body.contains(b) || b.dataset.panel) this.hotkeys.delete(k);
   }
 
@@ -179,7 +243,7 @@ export class UI {
 
   /** Chip-based bet selector. */
   betControl({ min = 1, max = 1000, value, onChange, getMoney, label = 'Bet' }) {
-    const wrap = h('div', 'row');
+    const wrap = h('div', 'row betctl');
     const box = h('div', 'betbox', `<small>${label}</small><b></b>`);
     const bEl = box.querySelector('b');
     let bet = clamp(value ?? min, min, max);
@@ -218,11 +282,12 @@ export class UI {
     const c = typeof content === 'string' ? h('div', 'card', content) : content;
     o.append(c);
     this.root.append(o);
+    document.documentElement.classList.add('overlay-open');
     this.overlayOpen = { el: o, card: c, onClose };
     this.overlayAllowsHotkeys = allowHotkeys;
     return { el: o, card: c, close: () => this.closeOverlay() };
   }
   closeOverlay() {
-    if (this.overlayOpen) { const cb = this.overlayOpen.onClose; this.overlayOpen.el.remove(); this.overlayOpen = null; cb && cb(); }
+    if (this.overlayOpen) { const cb = this.overlayOpen.onClose; this.overlayOpen.el.remove(); this.overlayOpen = null; document.documentElement.classList.remove('overlay-open'); cb && cb(); }
   }
 }

@@ -168,7 +168,7 @@ export class BigWheel extends Station {
     const ui = this.ui;
     const p = (this.panel = ui.openPanel({ title: 'Wheel of Jelly', limits: `Max total ${fmtMoney(this.limits[1])}`, onLeave: () => this.ctx.director.leaveStation() }));
     this.chipCtl = ui.betControl({ min: this.limits[0], max: this.limits[1], value: this.chip, getMoney: () => this.state.money, onChange: (v) => (this.chip = v), label: 'Chip' });
-    const grid = h('div', 'betgrid'); grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
+    const grid = ui.grid(7, 4);
     this.cells = {};
     for (const s of SEGS) {
       const cell = h('div', 'betcell interactive', `<div class="nm" style="color:${s.id === 'L' ? '#ffd24a' : s.color}">${s.label}</div><div class="od">${s.pay}:1 · ${s.n}/54</div>`);
@@ -182,7 +182,7 @@ export class BigWheel extends Station {
     this.histEl = h('div', 'history');
     p.body.append(this.chipCtl.el, grid, row, this.histEl);
     this.renderBets();
-    p.msg('Click a symbol to bet on it, then spin!');
+    p.msg(`${ui.isTouch ? 'Tap' : 'Click'} a symbol to bet on it, then spin!`);
   }
   canLeave() { return !this.spinning; }
 

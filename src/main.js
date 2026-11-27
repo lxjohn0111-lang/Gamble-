@@ -6,6 +6,7 @@ import { Input } from './engine/input.js';
 import { audio } from './engine/audio.js';
 import { Tweens, nextFrame, wait } from './engine/util.js';
 import { UI } from './ui/ui.js';
+import { Framing } from './engine/framing.js';
 import { Player } from './player/player.js';
 import { Director } from './game/director.js';
 import { state } from './game/state.js';
@@ -86,6 +87,8 @@ class App {
     renderer.setQuality(weak ? 'low' : 'high');
     this.input = new Input(this.canvas);
     this.ui = new UI(document.getElementById('ui'));
+    this.ui.setTouch(this.input.isTouch);
+    this.framing = new Framing(camera, this.ui, 72);
     this.tweens = new Tweens();
     this.player = new Player(camera, this.input);
     this.loadSettings();
@@ -111,6 +114,7 @@ class App {
 
     this.bindEvents();
     this.input.setupTouch(document.getElementById('ui'), () => d.touchUse());
+    this.ui.onPause = () => { if (d.phase === 'play' && !this.ui.overlayOpen) d.togglePause(); };
     this.loop();
     if (DEV) window.__gamble = this; // handy for automated smoke tests
   }
@@ -163,6 +167,7 @@ class App {
       d.update(dt, t);
       this.ui.tick(dt);
       this.renderer.adapt(dt);
+      this.framing.update(dt);
       this.renderer.render(t);
       this.input.endFrame();
     };

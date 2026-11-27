@@ -133,9 +133,9 @@ export class CoinPusher extends Station {
     p.body.append(row);
     p.msg('Aim with A / D or the mouse. Hit the glowing gate for a BONUS!');
     this.onMove = (e) => { const r = this.ctx.director.app.canvas.getBoundingClientRect(); this.aimX = clamp(((e.clientX - r.left) / r.width - 0.5) * 1.0, -0.32, 0.32); };
-    this.ctx.director.app.canvas.addEventListener('mousemove', this.onMove);
+    this.ctx.director.app.canvas.addEventListener('pointermove', this.onMove);
   }
-  leave() { super.leave(); this.ctx.director.app.canvas.removeEventListener('mousemove', this.onMove); }
+  leave() { super.leave(); this.ctx.director.app.canvas.removeEventListener('pointermove', this.onMove); }
 
   drop() {
     if (!this.takeBet(this.coinValue, 'pusher')) return;

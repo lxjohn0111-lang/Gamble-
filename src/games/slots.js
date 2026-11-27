@@ -298,7 +298,7 @@ export class SlotMachine extends Station {
     this.footprint = { w: 0.74, d: 0.66, ox: 0, oz: -0.02 };
     this.interactLocal = new THREE.Vector3(0, 0, 1.05);
     this.interactR = 1.15;
-    this.camLocal = { pos: new THREE.Vector3(0, 1.44, 0.86), look: new THREE.Vector3(0, 1.2, 0) };
+    this.camLocal = { pos: new THREE.Vector3(0, 1.46, 0.88), look: new THREE.Vector3(0, 1.32, 0) };
     this.bet = this.limits[0] * (this.video ? 2 : 5);
     this.freeSpins = 0;
     this.win = 0;

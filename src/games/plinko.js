@@ -29,7 +29,7 @@ export class Plinko extends Station {
     this.footprint = { w: 2.3, d: 0.9, ox: 0, oz: 0 };
     this.interactLocal = new THREE.Vector3(0, 0, 1.35);
     this.interactR = 1.5;
-    this.camLocal = { pos: new THREE.Vector3(0, 1.75, 2.6), look: new THREE.Vector3(0, 1.6, 0) };
+    this.camLocal = { pos: new THREE.Vector3(0, 1.85, 2.75), look: new THREE.Vector3(0, 1.9, 0) };
     this.risk = 'medium';
     this.bet = 5;
     this.balls = [];

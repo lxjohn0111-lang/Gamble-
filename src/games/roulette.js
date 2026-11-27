@@ -97,6 +97,8 @@ export class Roulette extends Station {
     this.watchSpot = (() => { const w = this.w(0, 0, 2.3); return { x: w.x, z: w.z, lx: this.group.position.x, lz: this.group.position.z, station: this }; })();
     for (let i = 0; i < 5; i++) { if (i === 2) continue; this.registerSeat(new THREE.Vector3(-0.6 + i * 0.55, 0, 1.0), Math.PI, { kind: 'table', seat: 0.78, action: 'cards' }); }
     this.raycaster = new THREE.Raycaster();
+    // keep the felt out of the static batch: it is the click/tap target for placing chips
+    felt.userData.dynamic = true;
     this.feltMesh = felt;
   }
 
@@ -299,16 +301,16 @@ export class Roulette extends Station {
     row.append(ui.button('Clear', 'dark small', () => this.clearBets(true)), ui.button('Rebet', 'dark small', () => this.rebet(), 'KeyR', 'R'), ui.button('Double', 'dark small', () => this.doubleBets(), 'KeyD', 'D'), this.spinBtn);
     this.histEl = h('div', 'history');
     p.body.append(this.chipCtl.el, quick, row, this.histEl);
-    p.msg('Click the felt to place chips (right-click removes). Splits & corners: click on the lines!');
+    p.msg(ui.isTouch ? 'Tap the felt to place chips. Splits & corners: tap on the lines!' : 'Click the felt to place chips (right-click removes). Splits & corners: click on the lines!');
     this.updatePanel();
     const c = this.ctx.director.app.canvas;
-    c.addEventListener('mousemove', this.onMove); c.addEventListener('mousedown', this.onDown);
+    c.addEventListener('pointermove', this.onMove); c.addEventListener('pointerdown', this.onDown);
     if (this.croupier) this.croupier.say('Place your bets, please!');
   }
   leave() {
     super.leave();
     const c = this.ctx.director.app.canvas;
-    c.removeEventListener('mousemove', this.onMove); c.removeEventListener('mousedown', this.onDown);
+    c.removeEventListener('pointermove', this.onMove); c.removeEventListener('pointerdown', this.onDown);
     document.body.style.cursor = '';
     this.hl.visible = false;
     if (this.phase === 'bet') this.clearBets(false);

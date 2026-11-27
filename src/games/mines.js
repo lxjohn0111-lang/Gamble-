@@ -28,7 +28,7 @@ export class Mines extends Station {
     this.footprint = { w: 0.95, d: 0.85, ox: 0, oz: 0 };
     this.interactLocal = new THREE.Vector3(0, 0, 1.05);
     this.interactR = 1.15;
-    this.camLocal = { pos: new THREE.Vector3(0, 1.72, 0.78), look: new THREE.Vector3(0, 0.72, 0.3) };
+    this.camLocal = { pos: new THREE.Vector3(0, 1.74, 0.8), look: new THREE.Vector3(0, 1.0, 0.0) };
     this.bet = 10; this.mines = 3;
     this.phase = 'idle';
     this.picks = 0;
@@ -84,9 +84,9 @@ export class Mines extends Station {
     this.multEl = h('span', 'tag');
     row.append(h('span', 'mini', 'Mines'), seg, this.startBtn, this.multEl);
     // HTML grid mirror
-    this.grid = h('div', 'betgrid compact'); this.grid.style.gridTemplateColumns = 'repeat(5, 38px)'; this.grid.style.justifyContent = 'center';
+    this.grid = h('div', 'betgrid compact mines');
     this.cells = [];
-    for (let i = 0; i < N; i++) { const c = h('div', 'betcell interactive', '<div class="nm">?</div>'); c.style.minWidth = '38px'; c.style.height = '30px'; c.onclick = () => this.pick(i); this.cells.push(c); this.grid.append(c); }
+    for (let i = 0; i < N; i++) { const c = h('div', 'betcell interactive', '<div class="nm">?</div>'); c.onclick = () => this.pick(i); this.cells.push(c); this.grid.append(c); }
     p.body.append(this.betCtl.el, row, this.grid);
     this.onDown = (e) => {
       if (this.phase !== 'play' || e.button !== 0) return;
@@ -95,11 +95,11 @@ export class Mines extends Station {
       const hit = this.raycaster.intersectObjects(this.tiles.map((t) => t.mesh))[0];
       if (hit) this.pick(this.tiles.findIndex((t) => t.mesh === hit.object));
     };
-    this.ctx.director.app.canvas.addEventListener('mousedown', this.onDown);
+    this.ctx.director.app.canvas.addEventListener('pointerdown', this.onDown);
     this.refresh();
-    p.msg('Pick a mine count, bet, then click tiles. Each gem raises the multiplier!');
+    p.msg(`Pick a mine count, bet, then ${ui.isTouch ? 'tap' : 'click'} tiles. Each gem raises the multiplier!`);
   }
-  leave() { super.leave(); this.ctx.director.app.canvas.removeEventListener('mousedown', this.onDown); }
+  leave() { super.leave(); this.ctx.director.app.canvas.removeEventListener('pointerdown', this.onDown); }
   canLeave() { return this.phase !== 'play'; }
 
   refresh() {

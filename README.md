@@ -64,6 +64,21 @@ Rendering: ACES tone mapping, PBR materials with an environment probe captured f
 light shafts, film grain/vignette grade, static mesh batching and instancing, distance LOD for the crowd, and automatic dynamic resolution
 plus a Low/Medium/High quality setting in the pause menu.
 
+## Mobile & responsive UI
+
+The game picks a layout from the screen shape (`src/ui/ui.js`, `updateLayout`):
+
+* **Desktop / tablet:** the game panel is docked at the bottom (max 44% of the height, scrolls if needed).
+* **Phone in landscape:** the panel is a scrollable column on the right; the game view stays on the left.
+* **Phone in portrait:** the panel is a bottom sheet (max half the screen); the game view stays on top.
+
+Small screens also get a compact HUD, smaller chips and wrapping bet grids, and the main action button
+(SPIN, DEAL...) is pinned so it never scrolls away. `src/engine/framing.js` moves the camera's view centre into
+the part of the screen the panel leaves free and widens the view to fit, so the machine or table is always
+visible next to the controls. Touch screens get a joystick, look pad, USE/RUN buttons and a pause button; they
+hide while a menu or game panel is open. `tools/ui-audit.cjs` screenshots every game at any screen size and
+checks that no buttons overlap; `tools/tap-test.cjs` taps the 3D roulette felt and a mines tile on a phone screen.
+
 ## Run & build
 
 ```bash

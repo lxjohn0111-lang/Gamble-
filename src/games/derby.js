@@ -163,7 +163,7 @@ export class Derby extends Station {
     const ui = this.ui;
     const p = (this.panel = ui.openPanel({ title: 'Jelly Derby', limits: '', onLeave: () => this.ctx.director.leaveStation() }));
     this.chipCtl = ui.betControl({ min: this.limits[0], max: this.limits[1], value: this.chip, getMoney: () => this.state.money, onChange: (v) => (this.chip = v), label: 'Chip' });
-    this.grid = h('div', 'betgrid'); this.grid.style.gridTemplateColumns = 'repeat(6, 1fr)';
+    this.grid = ui.grid(6, 3);
     this.cells = [];
     this.horses.forEach((hh, i) => {
       const cell = h('div', 'betcell interactive', `<div class="nm" style="color:${hh.silk}">#${i + 1} ${hh.name.split(' ')[0]}</div><div class="od"></div>`);

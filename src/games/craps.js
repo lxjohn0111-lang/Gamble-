@@ -173,7 +173,7 @@ export class Craps extends Station {
     const ui = this.ui;
     const p = (this.panel = ui.openPanel({ title: 'Craps', limits: '', onLeave: () => this.ctx.director.leaveStation() }));
     this.chipCtl = ui.betControl({ min: this.limits[0], max: this.limits[1], value: this.chip, getMoney: () => this.state.money, onChange: (v) => (this.chip = v), label: 'Chip' });
-    const grid = h('div', 'betgrid compact'); grid.style.gridTemplateColumns = 'repeat(5, 1fr)';
+    const grid = ui.grid(5, 4, 'compact');
     this.cells = {};
     for (const b of BETS) {
       const cell = h('div', 'betcell interactive', `<div class="nm">${b.name}</div><div class="od">${b.odds}</div>`);
@@ -185,9 +185,9 @@ export class Craps extends Station {
     this.rollBtn = ui.button('Hold to throw', 'big green', () => {}, null);
     this.rollBtn.addEventListener('mousedown', () => this.charge());
     this.rollBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this.charge(); }, { passive: false });
-    this.meter = h('div', '', '<div style="width:160px;height:14px;border-radius:8px;background:rgba(255,255,255,.1);overflow:hidden;border:1px solid rgba(255,211,106,.4)"><i style="display:block;height:100%;width:0%;background:linear-gradient(90deg,#4dff9a,#ffd24a,#ff4a5a)"></i></div>');
+    this.meter = h('div', 'meter', '<div style="width:160px;height:14px;border-radius:8px;background:rgba(255,255,255,.1);overflow:hidden;border:1px solid rgba(255,211,106,.4)"><i style="display:block;height:100%;width:0%;background:linear-gradient(90deg,#4dff9a,#ffd24a,#ff4a5a)"></i></div>');
     this.histEl = h('div', 'history');
-    row.append(ui.button('Clear', 'dark small', () => this.clearBets()), this.rollBtn, this.meter, h('span', 'mini', 'or hold SPACE'), this.histEl);
+    row.append(ui.button('Clear', 'dark small', () => this.clearBets()), this.rollBtn, this.meter, h('span', 'mini kbd-hint', 'or hold SPACE'), this.histEl);
     p.body.append(this.chipCtl.el, grid, row);
     this.keyDown = (e) => { if (e.code === 'Space' && !e.repeat) { e.preventDefault(); this.charge(); } };
     this.keyUp = (e) => { if (e.code === 'Space') this.release(); };

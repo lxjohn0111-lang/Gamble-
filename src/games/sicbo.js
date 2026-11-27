@@ -111,12 +111,11 @@ export class SicBo extends Station {
     const ui = this.ui;
     const p = (this.panel = ui.openPanel({ title: 'Sic Bo', limits: '', onLeave: () => this.ctx.director.leaveStation() }));
     this.chipCtl = ui.betControl({ min: this.limits[0], max: this.limits[1], value: this.chip, getMoney: () => this.state.money, onChange: (v) => (this.chip = v), label: 'Chip' });
-    const grid = h('div', 'betgrid compact'); grid.style.gridTemplateColumns = 'repeat(9, 1fr)';
+    const grid = ui.grid(9, 6, 'compact'); grid.style.setProperty('--cspan3', 2);
     this.cells = {};
     for (const b of BETS) {
       const cell = h('div', 'betcell interactive', `<div class="nm">${b.name}</div><div class="od">${b.odds}</div>`);
-      if (b.id === 'small' || b.id === 'big' || b.id === 'anytriple') cell.style.gridColumn = 'span 3';
-      cell.style.minWidth = '0'; cell.style.padding = '4px';
+      if (b.id === 'small' || b.id === 'big' || b.id === 'anytriple') cell.classList.add('span3');
       cell.onclick = () => this.addBet(b.id);
       cell.oncontextmenu = (e) => { e.preventDefault(); delete this.bets[b.id]; this.renderBets(); };
       this.cells[b.id] = cell; grid.append(cell);

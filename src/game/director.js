@@ -139,7 +139,8 @@ export class Director {
     if (state.day === 1 && !this._tutorialShown && SDK.getItem('tutorial') !== '1') {
       this._tutorialShown = true;
       SDK.setItem('tutorial', '1');
-      setTimeout(() => this.ui.toast('🖱️ Click to look around · <b>WASD</b> to walk · <b>SHIFT</b> to run · <b>E</b> to play', '', 6500), 1500);
+      const controls = this.input.isTouch ? '👆 Drag on the right side to look · left stick to walk · <b>USE</b> to play' : '🖱️ Click to look around · <b>WASD</b> to walk · <b>SHIFT</b> to run · <b>E</b> to play';
+      setTimeout(() => this.ui.toast(controls, '', 6500), 1500);
       setTimeout(() => this.ui.toast('💰 Make Big Tony\'s quota, then leave through the <b>EXIT</b> before 4:00 AM', 'gold', 6500), 8000);
       setTimeout(() => this.ui.toast('🍸 Drinks at the bar give luck buffs · ✨ Look for dropped chips on the floor', '', 6000), 15000);
     }
@@ -682,7 +683,7 @@ export class Director {
     const mus = h('div', 'setting', `<span>Music volume</span>`);
     const mr = h('input'); mr.type = 'range'; mr.min = 0; mr.max = 1; mr.step = 0.05; mr.value = audio.musicVolume; mr.oninput = () => { audio.setMusicVolume(+mr.value); this.app.saveSettings(); };
     mus.append(mr);
-    const sens = h('div', 'setting', `<span>Mouse sensitivity</span>`);
+    const sens = h('div', 'setting', `<span>Look sensitivity</span>`);
     const sr = h('input'); sr.type = 'range'; sr.min = 0.3; sr.max = 2.5; sr.step = 0.05; sr.value = this.input.sensitivity; sr.oninput = () => { this.input.sensitivity = +sr.value; this.app.saveSettings(); };
     sens.append(sr);
     const ql = h('div', 'setting', `<span>Graphics quality</span>`);
@@ -695,13 +696,15 @@ export class Director {
     ql.append(seg);
     settings.append(vol, mus, sens, ql);
     card.append(settings);
-    const help = h('p', 'mini', 'WASD move · Mouse look · Shift run · E interact · Esc pause/leave a game. Reach the quota, then walk out the EXIT before 4:00 AM.');
+    const help = h('p', 'mini', this.input.isTouch
+      ? 'Left stick: walk · drag on the right: look · USE: play · RUN: hurry. Reach the quota, then walk out the EXIT before 4:00 AM.'
+      : 'WASD move · Mouse look · Shift run · E interact · Esc pause/leave a game. Reach the quota, then walk out the EXIT before 4:00 AM.');
     card.append(help);
     const row = h('div', 'center');
     row.append(this.ui.button('Resume', 'big green', () => this.resume()));
     let armed = false;
     const abandon = this.ui.button('Abandon run', 'dark', () => {
-      if (!armed) { armed = true; abandon.textContent = 'Click again to abandon'; setTimeout(() => { armed = false; abandon.textContent = 'Abandon run'; }, 3000); return; }
+      if (!armed) { armed = true; abandon.textContent = this.input.isTouch ? 'Tap again to abandon' : 'Click again to abandon'; setTimeout(() => { armed = false; abandon.textContent = 'Abandon run'; }, 3000); return; }
       this.resume(); this.gameOver('broke');
     });
     row.append(abandon);
