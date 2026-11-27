@@ -207,6 +207,7 @@ export class Derby extends Station {
     const order = [winner, ...shuffle(this.horses.map((_, i) => i).filter((i) => i !== winner))];
     this.horses.forEach((hh) => { hh.finishRank = order.indexOf(hh.idx); hh.finishTime = 11 + hh.finishRank * 0.45 + rand() * 0.3; hh.wobble = rand() * TAU; });
     this.winner = winner;
+    this.announced = false;
     this.raceT = 0;
     audio.play('bugle', { pos: this.worldPos() });
     this.drawTote(true);
@@ -216,9 +217,9 @@ export class Derby extends Station {
     audio.loop('gallop', { vol: 0.15, freq: 280, type: 'lowpass' });
   }
 
-  async finish() {
-    this.phase = 'done';
-    audio.stopLoop('gallop');
+  // called the moment the winner crosses the line; the field keeps running
+  announce() {
+    this.announced = true;
     const w = this.winner;
     this.results.push(w);
     const hh = this.horses[w];
@@ -229,7 +230,13 @@ export class Derby extends Station {
     if (gross < total) { this.state.lost(total - gross, 'derby'); if (!gross) { audio.play('aww', { pos: this.worldPos() }); this.ctx.director.bigLoss(this.worldPos(), total); } }
     this.panel && this.panel.msg(`#${w + 1} ${hh.name} wins!${gross ? ' You collect ' + fmtMoney(gross) : ''}`, gross > total ? 'win' : 'lose');
     audio.play('cheer', { pos: this.worldPos() });
-    await wait(2500);
+  }
+
+  async finish() {
+    this.phase = 'done';
+    audio.stopLoop('gallop');
+    if (!this.announced) this.announce();
+    await wait(2000);
     this.bets = {};
     this.phase = 'bet';
     this.newRace();
@@ -262,6 +269,8 @@ export class Derby extends Station {
         hh.jk.rotation.z = -0.3;
       }
       if (Math.floor(this.raceT * 2) !== this._tt) { this._tt = Math.floor(this.raceT * 2); this.drawTote(true); }
+      const lead = this.horses[this.winner];
+      if (!this.announced && lead && this.raceT >= lead.finishTime) this.announce();
       if (allDone) this.finish();
     } else {
       for (const hh of this.horses) { hh.legs.forEach((l, i) => (l.rotation.z = Math.sin(t * 2 + i) * 0.08)); hh.g.position.y = this.top + Math.sin(t * 3 + hh.idx) * 0.003; }

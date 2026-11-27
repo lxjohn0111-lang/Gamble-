@@ -465,6 +465,7 @@ export class Director {
     const root = this.ui.root;
     for (let i = 0; i < n; i++) {
       const c = document.createElement('div');
+      c.className = 'coin-fx';
       const size = 18 + Math.random() * 22;
       c.style.cssText = `position:absolute;left:${Math.random() * 100}vw;top:-40px;width:${size}px;height:${size}px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff6b0,#ffc23a 45%,#a86a0a);box-shadow:inset 0 0 0 3px #d8941a,0 3px 8px rgba(0,0,0,.5);z-index:15;pointer-events:none;`;
       root.append(c);

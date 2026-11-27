@@ -1,0 +1,17 @@
+CONTROLS
+Mouse ............ Look around (click the game first to capture the mouse)
+W A S D / Arrows . Walk
+Shift ............ Run
+E / Left click ... Play a game, order at the bar, use the ATM, leave through the EXIT
+Esc .............. Leave a game / pause menu (volume, music, sensitivity, graphics)
+Space ............ Main action in every game (spin, deal, drop, throw, shake, start)
+
+IN THE GAMES
+Mouse ............ Click chips and bet buttons; click the roulette felt to place bets; drag to scratch tickets
+H / S / D / P .... Blackjack: Hit, Stand, Double, Split
+1 to 5 ........... Video Poker: hold cards
+R ................ Repeat your last bet (Roulette, Wheel, Baccarat, Sic Bo)
+A / D ............ Coin pusher: move the coin dropper
+Hold Space ....... Craps: charge your throw, release to roll
+
+Touch screens: left stick to walk, drag on the right side to look, USE button to interact.

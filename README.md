@@ -68,8 +68,21 @@ plus a Low/Medium/High quality setting in the pause menu.
 
 ```bash
 npm install
-npm run dev      # local dev server
-npm run build    # production build into dist/
+npm run dev               # local dev server
+npm run build             # production build into dist/
+npm run build:crazygames  # single-file build: crazygames-upload/index.html + Gamble-CrazyGames.zip
 ```
 
-To publish on CrazyGames, upload the **contents of `dist/`** (`index.html` + `assets/`) as an HTML5 game. All paths are relative.
+## CrazyGames upload kit (`crazygames-upload/`)
+
+| File | Use |
+|---|---|
+| `Gamble-CrazyGames.zip` | Upload as the HTML5 game. It holds a single `index.html` with all code, styles and the SDK tag inlined. |
+| `index.html` | The same file unzipped, for a quick local test. |
+| `videos/Gamble-landscape-1920x1080.mp4` | Landscape gameplay video (16:9, 20 s, H.264, silent). |
+| `videos/Gamble-portrait-1080x1920.mp4` | Portrait gameplay video (9:16, 20 s, H.264, silent). |
+| `covers/Gamble-cover-1920x1080.jpg`, `-800x1200.jpg`, `-800x800.jpg` | Landscape, portrait and square covers. |
+| `description.txt`, `controls.txt` | Store-page text. |
+
+The videos and covers are recorded from the game itself with the scripts in `tools/promo/` (see its README).
+`tools/test-sdk.cjs` checks a build against a mock CrazyGames SDK, including that progress is saved through `SDK.data`.
