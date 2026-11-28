@@ -26,7 +26,10 @@ Craps (cannon-es physics dice, Pass/Don't Pass, odds, Field, Place, Hardways, pr
 Video Poker (Jacks or Better 9/6, hold hints) · Wheel of Jelly (Big Six) · Scratch cards (scratch the foil with your mouse) · Plinko (3 risk levels) ·
 Coin Pusher (custom disc physics, bonus gate, prizes) · Rocket Jelly (crash) · Jelly Mines · Sic Bo · Jelly Derby.
 
-All games use real odds (house edges between ~1% and ~8%), and the slot paytables were verified by simulation (≈97% RTP).
+The casino is player-friendly: every game pays back a little more than it takes on average. Slots, crash, mines,
+Plinko, the wheel, the derby and scratch cards are tuned to about 102–105% RTP (slots verified by enumeration and simulation),
+and every win's profit gets a +10% "house luck" bonus, which also lifts the classic table games (roulette, blackjack,
+craps, baccarat, sic bo, video poker) above 100%. All difficulty knobs live in `src/game/balance.js`.
 
 ## Progression & addiction loop
 
@@ -34,6 +37,7 @@ All games use real odds (house edges between ~1% and ~8%), and the slot paytable
 * Bar drinks give timed luck buffs (and make the room wobble).
 * Dropped chips sparkle on the carpet. Grab them.
 * "Fingers" Fontaine, the loan shark, will always lend you money (50% interest, added to tomorrow's quota).
+* Lose 4 bets in a row and **Lady Luck** steps in: wins pay +25% for 75 seconds. Hot streaks add up to +15% more.
 * Big wins trigger banners, coin showers, and the whole crowd of jelly patrons turns around to cheer.
 
 ## Controls

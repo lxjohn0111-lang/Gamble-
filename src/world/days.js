@@ -1,3 +1,4 @@
+import { BALANCE } from '../game/balance.js';
 // Casino definitions for each night. Station "rot" = yaw; a station's front
 // (where the player stands/sits) faces local +Z.
 const H = Math.PI / 2;
@@ -244,9 +245,9 @@ export const MODIFIERS = [
 ];
 
 export function quotaFor(day) {
-  const base = [1000, 2000, 3500, 6000, 10000];
+  const base = BALANCE.quotas;
   if (day <= base.length) return base[day - 1];
-  return Math.round((base[base.length - 1] * Math.pow(1.55, day - base.length)) / 500) * 500;
+  return Math.round((base[base.length - 1] * Math.pow(BALANCE.quotaGrowth, day - base.length)) / 500) * 500;
 }
-export function stakeFor(day) { return day === 1 ? 500 : Math.round((quotaFor(day) * 0.4) / 50) * 50; }
+export function stakeFor(day) { return day === 1 ? BALANCE.firstStake : Math.round((quotaFor(day) * BALANCE.stakeShare) / 50) * 50; }
 export function casinoFor(day) { return CASINOS[(day - 1) % CASINOS.length]; }

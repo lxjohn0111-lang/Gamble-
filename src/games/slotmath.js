@@ -20,15 +20,17 @@ function strip(weights) {
 
 // ---------------------------------------------------------------- classic 3-reel, 1 line
 const classicStrip = () => {
-  const sy = strip({ [SYM.WILD]: 1, [SYM.SEVEN]: 1, [SYM.BAR3]: 2, [SYM.BAR2]: 2, [SYM.BAR]: 3, [SYM.BELL]: 2, [SYM.CHERRY]: 2, [SYM.LEMON]: 3 });
+  // player-friendly tuning (see src/game/balance.js): RTP 102.9%, a win on 27% of spins, low variance
+  const sy = strip({ [SYM.WILD]: 1, [SYM.SEVEN]: 1, [SYM.BAR3]: 2, [SYM.BAR2]: 2, [SYM.BAR]: 3, [SYM.BELL]: 2, [SYM.CHERRY]: 3, [SYM.LEMON]: 2 });
   const out = []; for (const x of sy) out.push(x, SYM.BLANK); return out; // symbols separated by blanks
 };
 export const CLASSIC = {
   reels: [classicStrip(), classicStrip(), classicStrip()],
-  pays: { [SYM.SEVEN]: 140, [SYM.BAR3]: 70, [SYM.BAR2]: 35, [SYM.BAR]: 18, [SYM.BELL]: 30, [SYM.CHERRY]: 20, [SYM.LEMON]: 12 },
-  wildWild: 700, // three wilds (plus progressive at max bet)
-  anyBar: 4,
-  cherry2: 4, cherry1: 2,
+  // value sits in frequent small wins rather than rare jackpots, so a typical session ends ahead more often
+  pays: { [SYM.SEVEN]: 60, [SYM.BAR3]: 30, [SYM.BAR2]: 20, [SYM.BAR]: 12, [SYM.BELL]: 15, [SYM.CHERRY]: 12, [SYM.LEMON]: 8 },
+  wildWild: 300, // three wilds (plus progressive at max bet)
+  anyBar: 5,
+  cherry2: 5, cherry1: 2,
 };
 
 const isBar = (s) => s === SYM.BAR || s === SYM.BAR2 || s === SYM.BAR3;
@@ -58,16 +60,16 @@ export const LINES = [
 const vw = (o) => strip(o);
 export const VIDEO = {
   reels: [
-    vw({ [SYM.WILD]: 1, [SYM.SCATTER]: 1, [SYM.SEVEN]: 2, [SYM.DIAMOND]: 3, [SYM.BELL]: 4, [SYM.MELON]: 4, [SYM.SHOE]: 5, [SYM.CHERRY]: 5, [SYM.LEMON]: 6 }),
     vw({ [SYM.WILD]: 2, [SYM.SCATTER]: 1, [SYM.SEVEN]: 2, [SYM.DIAMOND]: 3, [SYM.BELL]: 4, [SYM.MELON]: 4, [SYM.SHOE]: 5, [SYM.CHERRY]: 5, [SYM.LEMON]: 5 }),
     vw({ [SYM.WILD]: 2, [SYM.SCATTER]: 1, [SYM.SEVEN]: 2, [SYM.DIAMOND]: 3, [SYM.BELL]: 4, [SYM.MELON]: 4, [SYM.SHOE]: 5, [SYM.CHERRY]: 5, [SYM.LEMON]: 5 }),
     vw({ [SYM.WILD]: 2, [SYM.SCATTER]: 1, [SYM.SEVEN]: 2, [SYM.DIAMOND]: 3, [SYM.BELL]: 4, [SYM.MELON]: 4, [SYM.SHOE]: 5, [SYM.CHERRY]: 5, [SYM.LEMON]: 5 }),
-    vw({ [SYM.WILD]: 1, [SYM.SCATTER]: 1, [SYM.SEVEN]: 2, [SYM.DIAMOND]: 3, [SYM.BELL]: 4, [SYM.MELON]: 4, [SYM.SHOE]: 5, [SYM.CHERRY]: 5, [SYM.LEMON]: 6 }),
+    vw({ [SYM.WILD]: 2, [SYM.SCATTER]: 1, [SYM.SEVEN]: 2, [SYM.DIAMOND]: 3, [SYM.BELL]: 4, [SYM.MELON]: 4, [SYM.SHOE]: 5, [SYM.CHERRY]: 5, [SYM.LEMON]: 5 }),
+    vw({ [SYM.WILD]: 2, [SYM.SCATTER]: 1, [SYM.SEVEN]: 2, [SYM.DIAMOND]: 3, [SYM.BELL]: 4, [SYM.MELON]: 4, [SYM.SHOE]: 5, [SYM.CHERRY]: 5, [SYM.LEMON]: 5 }),
   ],
-  // pays per line bet for 3/4/5 of a kind
+  // pays per line bet for 3/4/5 of a kind (player-friendly tuning: RTP ~104%, a win on 35% of spins, low variance)
   pays: {
-    [SYM.WILD]: [60, 300, 2400], [SYM.SEVEN]: [35, 140, 700], [SYM.DIAMOND]: [24, 95, 360], [SYM.BELL]: [14, 48, 180],
-    [SYM.MELON]: [12, 36, 120], [SYM.SHOE]: [7, 24, 85], [SYM.CHERRY]: [6, 18, 60], [SYM.LEMON]: [5, 14, 48],
+    [SYM.WILD]: [40, 150, 800], [SYM.SEVEN]: [25, 90, 350], [SYM.DIAMOND]: [18, 60, 200], [SYM.BELL]: [13, 36, 110],
+    [SYM.MELON]: [11, 30, 85], [SYM.SHOE]: [9, 24, 65], [SYM.CHERRY]: [8, 20, 52], [SYM.LEMON]: [7, 16, 44],
   },
   scatter: { 3: 4, 4: 18, 5: 70 }, // × total bet
   freeSpins: { 3: 8, 4: 12, 5: 20 },

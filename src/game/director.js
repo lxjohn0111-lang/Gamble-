@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { World } from '../world/casino.js';
 import { Crowd } from '../characters/npc.js';
 import { STATIONS } from '../games/index.js';
+import { BALANCE } from './balance.js';
 import { state, PERKS, DRINKS } from './state.js';
 import { audio } from '../engine/audio.js';
 import { SDK } from '../sdk.js';
@@ -46,7 +47,7 @@ export class Director {
     state.on('toast', (msg, kind) => this.ui.toast(msg, kind));
     state.on('streak', (n, lostAt) => {
       this.ui.setStreak(n);
-      if ([3, 5, 8, 12].includes(n)) { this.ui.toast(`🔥 HOT STREAK ×${n}! Wins pay +${Math.min(10, (n - 2) * 2)}%`, 'gold'); audio.play('powerup', { vol: 0.6 }); }
+      if ([3, 5, 8, 12].includes(n)) { this.ui.toast(`🔥 HOT STREAK ×${n}! Wins pay +${Math.round(Math.min(BALANCE.streakCap, BALANCE.streakStep * (n - 2)) * 100)}%`, 'gold'); audio.play('powerup', { vol: 0.6 }); }
       if (!n && lostAt >= 3) this.ui.toast(`❄️ Streak of ${lostAt} ended.`, 'bad', 1800);
     });
     state.on('buffs', () => this.ui.setBuffs(state.buffs));

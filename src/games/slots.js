@@ -181,7 +181,7 @@ function bellyTexture(video, fg) {
       g.fillText('9 LINES · WILD SUBSTITUTES', 256, 140);
       g.fillStyle = fg; g.fillText('DOUBLE-UP AFTER ANY WIN', 256, 190);
     } else {
-      const rows = [['JELLY JELLY JELLY', 'JACKPOT'], ['7 7 7', '140×'], ['BAR3 ×3', '70×'], ['BAR2 ×3', '35×'], ['BELL ×3', '30×'], ['ANY CHERRY', '2×'], ['WILD = ×2 EACH', '']];
+      const rows = [['JELLY JELLY JELLY', 'JACKPOT'], ['7 7 7', `${CLASSIC.pays[SYM.SEVEN]}×`], ['BAR3 ×3', `${CLASSIC.pays[SYM.BAR3]}×`], ['BAR2 ×3', `${CLASSIC.pays[SYM.BAR2]}×`], ['BELL ×3', `${CLASSIC.pays[SYM.BELL]}×`], ['ANY CHERRY', `${CLASSIC.cherry1}×`], ['WILD = ×2 EACH', '']];
       g.font = 'bold 22px sans-serif';
       rows.forEach(([a, b], i) => { g.textAlign = 'left'; g.fillStyle = '#fff'; g.fillText(a, 60, 36 + i * 32); g.textAlign = 'right'; g.fillStyle = fg; g.fillText(b, 452, 36 + i * 32); });
     }

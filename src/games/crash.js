@@ -59,8 +59,9 @@ export class Crash extends Station {
 
   newRound() {
     this.phase = 'wait'; this.countdown = 6; this.t = 0;
+    // player-friendly: 3% instant crash, otherwise P(reaching x) = 1.06 / x, so any cash-out target pays back ~103%
     const U = rand();
-    this.crashAt = Math.max(1, Math.floor((100 * 0.97) / Math.max(1e-6, 1 - U)) / 100);
+    this.crashAt = U < 0.03 ? 1 : Math.max(1.06, Math.floor((100 * 1.06) / Math.max(1e-6, 1 - (U - 0.03) / 0.97)) / 100);
     this.players = Array.from({ length: 6 + Math.floor(rand() * 4) }, () => ({ name: randPick(NAMES), bet: Math.round((5 + rand() * 200) / 5) * 5, target: Math.max(1.05, 0.97 / Math.max(0.02, rand())), out: 0 }));
     this.cashed = 0;
     if (this.queuedBet && this.active) this.placeBet(this.queuedBet);
@@ -70,7 +71,7 @@ export class Crash extends Station {
   enter() {
     super.enter();
     const ui = this.ui;
-    const p = (this.panel = ui.openPanel({ title: 'Rocket Jelly', limits: 'Odds: 97% / multiplier · 3% house edge', onLeave: () => this.ctx.director.leaveStation() }));
+    const p = (this.panel = ui.openPanel({ title: 'Rocket Jelly', limits: 'Pays back about 103% on average · 3% instant crash', onLeave: () => this.ctx.director.leaveStation() }));
     this.betCtl = ui.betControl({ min: this.limits[0], max: this.limits[1], value: this.bet, getMoney: () => this.state.money, onChange: (v) => (this.bet = v) });
     const row = h('div', 'row');
     this.mainBtn = ui.button('Bet', 'big green', () => this.mainAction(), 'Space', 'SPACE');

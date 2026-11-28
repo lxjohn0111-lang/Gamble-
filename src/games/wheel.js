@@ -12,13 +12,14 @@ import { h } from '../ui/ui.js';
 // ============================================================================
 
 const SEGS = [
-  { id: '1', label: '$1', pay: 1, n: 24, color: '#f2c94c' },
-  { id: '2', label: '$2', pay: 2.5, n: 14, color: '#56ccf2' },
-  { id: '5', label: '$5', pay: 5, n: 8, color: '#bb6bd9' },
-  { id: '10', label: '$10', pay: 11, n: 4, color: '#27ae60' },
-  { id: '20', label: '$20', pay: 24, n: 2, color: '#eb5757' },
-  { id: 'J', label: 'JELLY', pay: 50, n: 1, color: '#ff7eb3' },
-  { id: 'L', label: 'GAMBLE!', pay: 50, n: 1, color: '#111111' },
+  // player-friendly pays: every symbol pays back 102-104% (n/54 x (pay + 1))
+  { id: '1', label: '$1', pay: 1.3, n: 24, color: '#f2c94c' },
+  { id: '2', label: '$2', pay: 3, n: 14, color: '#56ccf2' },
+  { id: '5', label: '$5', pay: 6, n: 8, color: '#bb6bd9' },
+  { id: '10', label: '$10', pay: 13, n: 4, color: '#27ae60' },
+  { id: '20', label: '$20', pay: 27, n: 2, color: '#eb5757' },
+  { id: 'J', label: 'JELLY', pay: 55, n: 1, color: '#ff7eb3' },
+  { id: 'L', label: 'GAMBLE!', pay: 55, n: 1, color: '#111111' },
 ];
 const N = 54;
 function layout() {
@@ -84,7 +85,7 @@ export class BigWheel extends Station {
     this.angle = 0; this.spinning = false;
     this.history = [];
   }
-  promptText() { return [this.label, `Big Six money wheel · up to 50:1 · ${fmtMoney(this.limits[0])}–${fmtMoney(this.limits[1])}`]; }
+  promptText() { return [this.label, `Big Six money wheel · up to 55:1 · ${fmtMoney(this.limits[0])}–${fmtMoney(this.limits[1])}`]; }
 
   build() {
     const S = (this.static = new THREE.Group());

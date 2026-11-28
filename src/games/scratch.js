@@ -17,8 +17,10 @@ const TICKETS = [
   { id: 'golden', name: 'Golden Ticket', price: 50, color: '#a8740a', accent: '#fff3b0', prizes: [[50, 0.14], [100, 0.08], [250, 0.035], [500, 0.015], [1000, 0.006], [5000, 0.0009], [25000, 0.00017]], desc: 'Match any of YOUR numbers to a WINNING number.' },
 ];
 
+const WIN_BOOST = 1.12; // player-friendly: 12% more winning tickets (~103% payback, ~32% of tickets win)
 function pickPrize(t, luck) {
   let r = rand();
+  luck *= WIN_BOOST;
   for (let i = t.prizes.length - 1; i >= 0; i--) { const [amt, p] = t.prizes[i]; const pp = p * luck; if (r < pp) return amt; r -= pp; }
   return 0;
 }

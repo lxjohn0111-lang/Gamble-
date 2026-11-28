@@ -1,5 +1,6 @@
 import { SDK } from '../sdk.js';
 import { quotaFor, stakeFor, casinoFor, MODIFIERS } from '../world/days.js';
+import { BALANCE } from './balance.js';
 import { makeRng } from '../engine/util.js';
 
 // ============================================================================
@@ -66,10 +67,11 @@ export class GameState extends Emitter {
     if (first) this.money = this.stake; else this.money += this.stake;
     this.dayStartMoney = this.money;
     this.timeMin = 0;
-    this.dayLength = 480 + (this.perks.watch || 0) * 60;
+    this.dayLength = BALANCE.nightMinutes + (this.perks.watch || 0) * 60;
     this.flags = { atmUsed: false, stakeDoubled: false, rabbitUsed: false, extraHour: false, loanTaken: 0 };
     this.buffs = [];
     this.streak = 0;
+    this.coldStreak = 0;
     this.dayStats = { won: 0, lost: 0, biggest: 0, hands: 0 };
     this.emit('money', this.money, 0);
     this.emit('streak', 0);
@@ -95,6 +97,7 @@ export class GameState extends Emitter {
     this.money += amount;
     const profit = amount - stake;
     if (profit > 0) {
+      this.coldStreak = 0;
       this.streak++;
       this.emit('streak', this.streak);
       this.stats.wins++; this.stats.totalWon += profit; this.dayStats.won += profit;
@@ -109,6 +112,12 @@ export class GameState extends Emitter {
   lost(stake, game) {
     this.dayStats.lost += stake;
     if (stake > 0 && this.streak) { const s = this.streak; this.streak = 0; this.emit('streak', 0, s); }
+    // Lady Luck: a run of losses earns a temporary boost on wins
+    if (stake > 0 && ++this.coldStreak >= BALANCE.pityLosses && !this.buffs.some((b) => b.pity)) {
+      this.coldStreak = 0;
+      this.addBuff({ ...BALANCE.pityBuff, pity: true }, 'Lady Luck');
+      this.emit('toast', `🍀 Lady Luck feels sorry for you: wins pay +${Math.round(BALANCE.pityBuff.luck * 100)}% for ${BALANCE.pityBuff.dur} seconds!`, 'gold');
+    }
     if (this.perks.rabbit && !this.flags.rabbitUsed && stake > 0) {
       this.flags.rabbitUsed = true;
       const refund = Math.min(stake, 1000);
@@ -144,8 +153,8 @@ export class GameState extends Emitter {
     if (this.modifier && this.modifier.slotsMult && game === 'slots') m *= this.modifier.slotsMult;
     return m;
   }
-  luck() { let l = 0; for (const b of this.buffs) if (b.luck) l += b.luck; return l + this.streakBonus(); }
-  streakBonus() { return Math.min(0.1, 0.02 * Math.max(0, (this.streak || 0) - 2)); }
+  luck() { let l = BALANCE.houseLuck; for (const b of this.buffs) if (b.luck) l += b.luck; return l + this.streakBonus(); }
+  streakBonus() { return Math.min(BALANCE.streakCap, BALANCE.streakStep * Math.max(0, (this.streak || 0) - 2)); }
   drunk() { let d = 0; for (const b of this.buffs) if (b.drunk) d = Math.max(d, b.drunk * Math.min(1, b.left / 15)); return d; }
   timeScale() { let s = 1; for (const b of this.buffs) if (b.slow) s *= 1 - b.slow; return s; }
   addBuff(effect, name) { this.buffs.push({ ...effect, left: effect.dur, name }); this.emit('buffs'); }
@@ -165,7 +174,7 @@ export class GameState extends Emitter {
     if (left <= 0 && before < this.dayLength) this.emit('closing');
   }
   clockString() {
-    const m = Math.floor(this.timeMin) + 20 * 60;
+    const m = Math.floor(this.timeMin) + 28 * 60 - this.dayLength; // the night always ends at 4:00 AM
     let h = Math.floor(m / 60) % 24, mm = m % 60;
     const ampm = h >= 12 ? 'PM' : 'AM';
     h = h % 12 || 12;

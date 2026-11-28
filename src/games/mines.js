@@ -16,7 +16,7 @@ const N = 25;
 export function minesMult(mines, picks) {
   let m = 1;
   for (let i = 0; i < picks; i++) m *= (N - i) / (N - mines - i);
-  return m * 0.97;
+  return m * 1.03; // player-friendly: 3% above fair odds
 }
 
 export class Mines extends Station {

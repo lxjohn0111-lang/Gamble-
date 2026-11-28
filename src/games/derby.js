@@ -20,7 +20,7 @@ const HORSES = [
   { name: 'Lucky Lime', color: 0xffe14d, silk: '#ffe14d' },
   { name: 'Jelly Bean Jr.', color: 0xff9f2e, silk: '#ff9f2e' },
 ];
-const ODDS = [3.1, 4.2, 5.2, 7.2, 10.5, 17]; // gross payout multipliers
+const ODDS = [3.3, 4.5, 5.6, 7.8, 11.3, 18.4]; // gross payout multipliers (player-friendly: ~102.6% payback)
 const LAPS = 1;
 const TRX = 1.25, TRZ = 0.62; // track ellipse radii (lane 0)
 
@@ -45,7 +45,7 @@ export class Derby extends Station {
     this.phase = 'bet';
     this.results = [];
   }
-  promptText() { return [this.label, `6 horses · odds from 2/1 to 16/1 · ${fmtMoney(this.limits[0])}–${fmtMoney(this.limits[1])}`]; }
+  promptText() { return [this.label, `6 horses · pays from 3.3× to 18.4× · ${fmtMoney(this.limits[0])}–${fmtMoney(this.limits[1])}`]; }
 
   build() {
     const S = (this.static = new THREE.Group());

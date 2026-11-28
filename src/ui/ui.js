@@ -1,5 +1,6 @@
 import { fmtMoney, clamp } from '../engine/util.js';
 import { audio } from '../engine/audio.js';
+import { BALANCE } from '../game/balance.js';
 
 // ============================================================================
 //  DOM UI: HUD, prompts, toasts, banners, station panels, overlays.
@@ -41,7 +42,7 @@ export class UI {
     tl.append(this.moneyEl, this.quotaEl, this.dayEl, this.modEl);
     const tr = h('div', 'hud-tr');
     const trRow = h('div', 'tr-row');
-    this.clockEl = h('div', 'clock', '8:00 PM');
+    this.clockEl = h('div', 'clock', '7:00 PM');
     this.pauseBtn = h('button', 'pausebtn', '<i></i><i></i>');
     this.pauseBtn.setAttribute('aria-label', 'Pause');
     this.pauseBtn.addEventListener('click', (e) => { e.stopPropagation(); audio.play('click'); this.onPause && this.onPause(); });
@@ -137,7 +138,7 @@ export class UI {
     if (txt !== this._lastMoneyTxt) { this.moneyText.textContent = txt; this._lastMoneyTxt = txt; }
   }
   setStreak(n) {
-    if (n >= 3) { this.streakEl.innerHTML = `🔥×${n}<small>+${Math.min(10, (n - 2) * 2)}%</small>`; this.streakEl.classList.add('on'); this.streakEl.classList.remove('pop'); void this.streakEl.offsetWidth; this.streakEl.classList.add('pop'); }
+    if (n >= 3) { this.streakEl.innerHTML = `🔥×${n}<small>+${Math.round(Math.min(BALANCE.streakCap, BALANCE.streakStep * (n - 2)) * 100)}%</small>`; this.streakEl.classList.add('on'); this.streakEl.classList.remove('pop'); void this.streakEl.offsetWidth; this.streakEl.classList.add('pop'); }
     else this.streakEl.classList.remove('on');
   }
   setQuota(money, quota) {
@@ -159,7 +160,7 @@ export class UI {
   }
   setBuffs(buffs) {
     this.buffEl.innerHTML = '';
-    for (const b of buffs) this.buffEl.append(h('div', 'buff', `🍸 ${b.name} <i>${Math.ceil(b.left)}s</i>`));
+    for (const b of buffs) this.buffEl.append(h('div', 'buff', `${b.pity ? '🍀' : '🍸'} ${b.name} <i>${Math.ceil(b.left)}s</i>`));
   }
   setPerks(perks, defs) {
     this.perkEl.innerHTML = '';
